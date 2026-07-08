@@ -49,7 +49,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private Role role = Role.CUSTOMMER;
+    private Role role = Role.CUSTOMER;
 
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     @Builder.Default

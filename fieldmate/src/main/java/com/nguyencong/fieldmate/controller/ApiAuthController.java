@@ -14,13 +14,17 @@ import com.nguyencong.fieldmate.dto.request.LoginRequest;
 import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
 import com.nguyencong.fieldmate.service.UserService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.http.MediaType;
 
 import jakarta.validation.Valid;
 
+@Tag(name = "Authentication")
 @RestController
 @RequestMapping("/api/auth")
-public class ApiUserController {
+public class ApiAuthController {
     @Autowired
     private UserService userService;
 

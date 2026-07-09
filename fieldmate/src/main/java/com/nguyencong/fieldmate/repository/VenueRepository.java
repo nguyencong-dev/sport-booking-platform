@@ -9,4 +9,5 @@ import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
 public interface VenueRepository extends JpaRepository<Venue, Long> {
     List<Venue> findByStatus(StatusVenue status);
+    List<Venue> findByNameContainingIgnoreCase(String name);
 }

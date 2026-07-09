@@ -28,14 +28,13 @@ public class SportTypeServiceImpl implements SportTypeService {
 
     @Override
     public SportTypeResponse createSportType(SportTypeRequest request) {
-        if (sportTypeRepository.existsByNameIgnoreCase(request.getName())) {
+        String name = request.getName().trim();
+
+        if (sportTypeRepository.existsByNameIgnoreCase(name)) {
             throw new RuntimeException("Loại thể thao đã tồn tại");
         }
 
-        SportType sportType = SportType.builder()
-                .name(request.getName().trim())
-                .build();
-
+        SportType sportType = SportTypeMapper.toEntity(request);
         SportType savedSportType = sportTypeRepository.save(sportType);
 
         return SportTypeMapper.toResponse(savedSportType);
@@ -52,11 +51,9 @@ public class SportTypeServiceImpl implements SportTypeService {
             throw new RuntimeException("Loại thể thao đã tồn tại");
         }
 
-        sportType.setName(name);
+        SportTypeMapper.updateEntity(sportType, request);
 
-        SportType updatedSportType = sportTypeRepository.save(sportType);
-
-        return SportTypeMapper.toResponse(updatedSportType);
+        return SportTypeMapper.toResponse(sportTypeRepository.save(sportType));
     }
 
     @Override

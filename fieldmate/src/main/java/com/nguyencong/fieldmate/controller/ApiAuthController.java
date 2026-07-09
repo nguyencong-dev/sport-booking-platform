@@ -13,7 +13,6 @@ import com.nguyencong.fieldmate.service.AuthService;
 import com.nguyencong.fieldmate.dto.request.LoginRequest;
 import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
-import com.nguyencong.fieldmate.service.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -26,20 +25,17 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class ApiAuthController {
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AuthService AuthService;
+    private AuthService authService;
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> register(@ModelAttribute RegisterRequest request) throws IOException {
-        userService.registerUser(request);
+        authService.registerUser(request);
         return ResponseEntity.ok("Đăng ký thành công!");
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> Login(@RequestBody @Valid LoginRequest request) {
-        return ResponseEntity.ok(AuthService.login(request));
+        return ResponseEntity.ok(authService.login(request));
     }
 
 }

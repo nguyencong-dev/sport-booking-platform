@@ -32,16 +32,14 @@ public class ApiSportTypeController {
 
     @GetMapping("/sport-types")
     public ResponseEntity<List<SportTypeResponse>> getAllSportTypes() {
-        return ResponseEntity.ok(sportTypeService.getAllSportTypes());
+        return new ResponseEntity<>(this.sportTypeService.getAllSportTypes(), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/secure/sport-types")
     public ResponseEntity<SportTypeResponse> createSportType(
             @Valid @RequestBody SportTypeRequest request) {
-        SportTypeResponse response = sportTypeService.createSportType(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return new ResponseEntity<>(this.sportTypeService.createSportType(request), HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -49,15 +47,13 @@ public class ApiSportTypeController {
     public ResponseEntity<SportTypeResponse> updateSportType(
             @PathVariable Long id,
             @Valid @RequestBody SportTypeRequest request) {
-        SportTypeResponse response = sportTypeService.updateSportType(id, request);
-
-        return ResponseEntity.ok(response);
+        return new ResponseEntity<>(this.sportTypeService.updateSportType(id, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/secure/sport-types/{id}")
     public ResponseEntity<Void> deleteSportType(@PathVariable Long id) {
         sportTypeService.deleteSportType(id);
-        return ResponseEntity.noContent().build();
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

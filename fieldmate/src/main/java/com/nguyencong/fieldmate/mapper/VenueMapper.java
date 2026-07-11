@@ -90,4 +90,15 @@ public class VenueMapper {
                                 .status(StatusVenue.PENDING)
                                 .build();
         }
+
+        public static void updateEntity(Venue venue, VenueRequest request) {
+                if (venue == null || request == null) {
+                        return;
+                }
+
+                venue.setName(request.getName() != null ? request.getName().trim() : venue.getName());
+                venue.setAddress(request.getAddress() != null ? request.getAddress().trim() : venue.getAddress());
+                venue.setLatitude(request.getLatitude() != null ? request.getLatitude() : venue.getLatitude());
+                venue.setLongitude(request.getLongitude() != null ? request.getLongitude() : venue.getLongitude());
+        }
 }

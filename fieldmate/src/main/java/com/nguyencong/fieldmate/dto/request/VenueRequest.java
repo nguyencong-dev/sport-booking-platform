@@ -32,12 +32,7 @@ public class VenueRequest {
     @DecimalMax(value = "180.0")
     private BigDecimal longitude;
 
-    @NotNull
     private MultipartFile banner;
-
-    @NotNull
     private MultipartFile logo;
 
-    @NotNull
-    private Long ownerId;
 }

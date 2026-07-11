@@ -13,9 +13,11 @@ import com.nguyencong.fieldmate.service.AuthService;
 import com.nguyencong.fieldmate.dto.request.LoginRequest;
 import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
+import com.nguyencong.fieldmate.dto.response.UserResponse;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import jakarta.validation.Valid;
@@ -28,14 +30,14 @@ public class ApiAuthController {
     private AuthService authService;
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> register(@ModelAttribute RegisterRequest request) throws IOException {
-        authService.registerUser(request);
-        return ResponseEntity.ok("Đăng ký thành công!");
+    public ResponseEntity<UserResponse> register(@ModelAttribute @Valid RegisterRequest request) throws IOException {
+        UserResponse userResponse = authService.registerUser(request);
+        return new ResponseEntity<>(userResponse, HttpStatus.OK);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> Login(@RequestBody @Valid LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        return new ResponseEntity<>(this.authService.login(request), HttpStatus.OK);
     }
 
 }

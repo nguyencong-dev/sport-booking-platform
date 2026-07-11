@@ -12,7 +12,9 @@ import com.cloudinary.Cloudinary;
 import com.nguyencong.fieldmate.dto.request.LoginRequest;
 import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
+import com.nguyencong.fieldmate.dto.response.UserResponse;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
 import com.nguyencong.fieldmate.service.AuthService;
 import com.nguyencong.fieldmate.security.JwtTokenProvider;
@@ -20,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthService{
+public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final JwtTokenProvider JwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -28,7 +30,7 @@ public class AuthServiceImpl implements AuthService{
     private final Cloudinary cloudinary;
 
     @Override
-    public void registerUser(RegisterRequest request) throws IOException {
+    public UserResponse registerUser(RegisterRequest request) throws IOException {
         User user = new User();
 
         user.setEmail(request.getEmail());
@@ -39,14 +41,14 @@ public class AuthServiceImpl implements AuthService{
 
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
             Map uploadResult = cloudinary.uploader().upload(
-                request.getAvatar().getBytes(),
-                Map.of("folder", "fieldmate/avatars")
-            );
+                    request.getAvatar().getBytes(),
+                    Map.of("folder", "fieldmate/avatars"));
 
             user.setAvatar((String) uploadResult.get("secure_url"));
         }
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return UserMapper.toResponse(savedUser);
     }
 
     @Override
@@ -58,6 +60,5 @@ public class AuthServiceImpl implements AuthService{
         String token = JwtTokenProvider.generateToken(user.getEmail());
         return new AuthResponse(token);
     }
-    
-}
 
+}

@@ -4,19 +4,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.nguyencong.fieldmate.entity.enums.BookingStatus;
-import com.nguyencong.fieldmate.entity.enums.PaymentStatus;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "bookings")
@@ -26,6 +23,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class Booking {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,22 +41,32 @@ public class Booking {
 
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
-    
+
     @Column(name = "end_time", nullable = false)
     private LocalTime endTime;
 
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 
+    @Column(
+            name = "required_deposit",
+            nullable = false,
+            precision = 12,
+            scale = 2)
+    private BigDecimal requiredDeposit;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false, length = 30)
+    @OneToMany(
+            mappedBy = "booking",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     @Builder.Default
-    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+    private List<Payment> payments = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

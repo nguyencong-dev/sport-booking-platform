@@ -20,10 +20,7 @@ import com.nguyencong.fieldmate.repository.VenueRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.CourtService;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class CourtServiceImpl implements CourtService {
     @Autowired
     private CourtRepository courtRepository;

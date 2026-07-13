@@ -3,6 +3,7 @@ package com.nguyencong.fieldmate.service.impl;
 import java.io.IOException;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,16 +19,19 @@ import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
 import com.nguyencong.fieldmate.service.AuthService;
 import com.nguyencong.fieldmate.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    private final UserRepository userRepository;
-    private final JwtTokenProvider JwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
-    private final PasswordEncoder passwordEncoder;
-    private final Cloudinary cloudinary;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private JwtTokenProvider JwtTokenProvider;
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private Cloudinary cloudinary;
 
     @Override
     public UserResponse registerUser(RegisterRequest request) throws IOException {
@@ -40,7 +44,7 @@ public class AuthServiceImpl implements AuthService {
         user.setLastName(request.getLastName());
 
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            Map uploadResult = cloudinary.uploader().upload(
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(
                     request.getAvatar().getBytes(),
                     Map.of("folder", "fieldmate/avatars"));
 

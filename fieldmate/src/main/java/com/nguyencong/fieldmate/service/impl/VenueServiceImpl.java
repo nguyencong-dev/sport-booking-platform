@@ -80,7 +80,7 @@ public class VenueServiceImpl implements VenueService {
         venue.setOwner(owner);
 
         if (request.getBanner() != null && !request.getBanner().isEmpty()) {
-            Map uploadResult = cloudinary.uploader().upload(
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(
                     request.getBanner().getBytes(),
                     Map.of("folder", "fieldmate/venues/banners"));
 
@@ -88,7 +88,7 @@ public class VenueServiceImpl implements VenueService {
         }
 
         if (request.getLogo() != null && !request.getLogo().isEmpty()) {
-            Map uploadResult = cloudinary.uploader().upload(
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(
                     request.getLogo().getBytes(),
                     Map.of("folder", "fieldmate/venues/logos"));
 

@@ -9,11 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
-import com.nguyencong.fieldmate.dto.response.VenueImageResponse;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 import com.nguyencong.fieldmate.service.VenueService;
@@ -74,20 +72,4 @@ public class ApiVenueController {
         return new ResponseEntity<>(this.venueService.getPendingVenues(), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasRole('COURT_OWNER')")
-    @PostMapping(value = "/secure/venues/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<VenueImageResponse>> uploadVenueImages(
-            @PathVariable Long id,
-            @RequestParam("images") List<MultipartFile> images) throws IOException {
-        return new ResponseEntity<>(this.venueService.uploadVenueImages(id, images), HttpStatus.OK);
-    }
-
-    @PreAuthorize("hasRole('COURT_OWNER')")
-    @DeleteMapping("/secure/venues/{venueId}/images/{imageId}")
-    public ResponseEntity<Void> deleteVenueImage(
-            @PathVariable Long venueId,
-            @PathVariable Long imageId) {
-        venueService.deleteVenueImage(venueId, imageId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
 }

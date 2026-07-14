@@ -34,7 +34,7 @@ public class ApiHeroBannerController {
     @GetMapping("/banners")
     public ResponseEntity<List<HeroBannerResponse>> getAllHeroBanners() {
 
-        return new ResponseEntity<List<HeroBannerResponse>>(
+        return new ResponseEntity<>(
                 heroBannerService.getAllHeroBanners(),
                 HttpStatus.OK);
     }
@@ -45,7 +45,7 @@ public class ApiHeroBannerController {
             @Valid @ModelAttribute HeroBannerRequest.Create request)
             throws IOException {
 
-        return new ResponseEntity<HeroBannerResponse>(this.heroBannerService.createHeroBanner(request),
+        return new ResponseEntity<>(this.heroBannerService.createHeroBanner(request),
                 HttpStatus.CREATED);
     }
 
@@ -56,7 +56,7 @@ public class ApiHeroBannerController {
             @Valid @ModelAttribute HeroBannerRequest.Update request)
             throws IOException {
 
-        return new ResponseEntity<HeroBannerResponse>(heroBannerService.updateHeroBanner(id, request), HttpStatus.OK);
+        return new ResponseEntity<>(heroBannerService.updateHeroBanner(id, request), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

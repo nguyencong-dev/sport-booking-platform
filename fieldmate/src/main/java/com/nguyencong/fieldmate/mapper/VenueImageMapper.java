@@ -4,7 +4,8 @@ import com.nguyencong.fieldmate.dto.response.VenueImageResponse;
 import com.nguyencong.fieldmate.entity.VenueImage;
 
 public class VenueImageMapper {
-    private VenueImageMapper() {}
+    private VenueImageMapper() {
+    }
 
     public static VenueImageResponse toResponse(VenueImage image) {
         if (image == null) {

@@ -32,3 +32,7 @@ class IngestionJobStatus(str, Enum):
     PROCESSING = "processing"
     COMPLETED = "completed"
     FAILED = "failed"
+
+class MessageRole(str, Enum):
+    USER = "user"
+    ASSISTANT = "assistant"

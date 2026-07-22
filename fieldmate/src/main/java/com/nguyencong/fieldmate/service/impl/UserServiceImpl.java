@@ -12,6 +12,9 @@ import com.cloudinary.Cloudinary;
 import com.nguyencong.fieldmate.dto.request.UserRequest;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
+import com.nguyencong.fieldmate.exception.FileUploadException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
@@ -54,8 +57,7 @@ public class UserServiceImpl implements UserService {
             Object secureUrl = uploadResult.get("secure_url");
 
             if (!(secureUrl instanceof String avatarUrl)) {
-                throw new RuntimeException(
-                        "Cloudinary không trả về URL ảnh");
+                throw new FileUploadException("Cloudinary không trả về URL ảnh");
             }
 
             currentUser.setAvatar(avatarUrl);
@@ -79,8 +81,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy người dùng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
         return UserMapper.toResponse(user);
     }
@@ -92,15 +93,13 @@ public class UserServiceImpl implements UserService {
             boolean enabled) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy người dùng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
         User currentAdmin = currentUserProvider.getCurrentUser();
 
         if (!enabled
                 && user.getId().equals(currentAdmin.getId())) {
-            throw new RuntimeException(
-                    "Admin không thể tự khóa tài khoản của mình");
+            throw new BusinessRuleViolationException("Admin không thể tự khóa tài khoản của mình");
         }
 
         user.setEnabled(enabled);

@@ -12,13 +12,15 @@ import com.cloudinary.Cloudinary;
 import com.nguyencong.fieldmate.dto.request.HeroBannerRequest;
 import com.nguyencong.fieldmate.dto.response.HeroBannerResponse;
 import com.nguyencong.fieldmate.entity.HeroBanner;
+import com.nguyencong.fieldmate.exception.BadRequestException;
+import com.nguyencong.fieldmate.exception.FileUploadException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.HeroBannerMapper;
 import com.nguyencong.fieldmate.repository.HeroBannerRepository;
 import com.nguyencong.fieldmate.service.HeroBannerService;
 
 @Service
-public class HeroBannerServiceImpl
-        implements HeroBannerService {
+public class HeroBannerServiceImpl implements HeroBannerService {
     @Autowired
     private HeroBannerRepository heroBannerRepository;
     @Autowired
@@ -41,8 +43,7 @@ public class HeroBannerServiceImpl
 
         if (request.getImage() == null
                 || request.getImage().isEmpty()) {
-            throw new RuntimeException(
-                    "Ảnh banner không được để trống");
+            throw new BadRequestException("Ảnh banner không được để trống");
         }
 
         Map<?, ?> uploadResult = cloudinary.uploader().upload(
@@ -54,8 +55,7 @@ public class HeroBannerServiceImpl
         Object secureUrl = uploadResult.get("secure_url");
 
         if (!(secureUrl instanceof String imageUrl)) {
-            throw new RuntimeException(
-                    "Cloudinary không trả về URL ảnh");
+            throw new FileUploadException("Cloudinary không trả về URL ảnh");
         }
 
         HeroBanner heroBanner = HeroBannerMapper.toEntity(request);
@@ -74,8 +74,7 @@ public class HeroBannerServiceImpl
             HeroBannerRequest.Update request) throws IOException {
 
         HeroBanner heroBanner = heroBannerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy hero banner"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hero banner"));
 
         HeroBannerMapper.updateEntity(heroBanner, request);
 
@@ -91,8 +90,7 @@ public class HeroBannerServiceImpl
             Object secureUrl = uploadResult.get("secure_url");
 
             if (!(secureUrl instanceof String imageUrl)) {
-                throw new RuntimeException(
-                        "Cloudinary không trả về URL ảnh");
+                throw new FileUploadException("Cloudinary không trả về URL ảnh");
             }
 
             heroBanner.setUrl(imageUrl);
@@ -107,8 +105,7 @@ public class HeroBannerServiceImpl
     @Transactional
     public void deleteHeroBanner(Long id) {
         HeroBanner heroBanner = heroBannerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy hero banner này"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hero banner này"));
 
         heroBannerRepository.delete(heroBanner);
     }

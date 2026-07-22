@@ -4,11 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.access.AccessDeniedException;
+
 import com.nguyencong.fieldmate.dto.request.BenefitRequest;
 import com.nguyencong.fieldmate.dto.response.BenefitResponse;
 import com.nguyencong.fieldmate.entity.Benefit;
 import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.entity.Venue;
+import com.nguyencong.fieldmate.exception.DuplicateResourceException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.BenefitMapper;
 import com.nguyencong.fieldmate.repository.BenefitRepository;
 import com.nguyencong.fieldmate.repository.VenueRepository;
@@ -31,13 +35,12 @@ public class BenefitServiceImpl implements BenefitService {
             BenefitRequest request) {
 
         Venue venue = venueRepository.findById(venueId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy cụm sân"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cụm sân"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
         if (!venue.getOwner().getId().equals(currentUser.getId())) {
-            throw new RuntimeException(
-                    "Bạn không có quyền thêm tiện ích cho cụm sân này");
+            throw new AccessDeniedException("Bạn không có quyền thêm tiện ích cho cụm sân này");
         }
 
         String benefitName = request.getName().trim();
@@ -47,8 +50,7 @@ public class BenefitServiceImpl implements BenefitService {
                 benefitName);
 
         if (existed) {
-            throw new RuntimeException(
-                    "Tiện ích này đã tồn tại");
+            throw new DuplicateResourceException("Tiện ích này đã tồn tại");
         }
 
         Benefit benefit = BenefitMapper.toEntity(request);
@@ -66,7 +68,7 @@ public class BenefitServiceImpl implements BenefitService {
             BenefitRequest request) {
 
         Benefit benefit = benefitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tiện ích"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tiện ích"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
@@ -74,8 +76,7 @@ public class BenefitServiceImpl implements BenefitService {
                 .getOwner()
                 .getId()
                 .equals(currentUser.getId())) {
-            throw new RuntimeException(
-                    "Bạn không có quyền cập nhật tiện ích này");
+            throw new AccessDeniedException("Bạn không có quyền cập nhật tiện ích này");
         }
 
         String benefitName = request.getName().trim();
@@ -87,8 +88,7 @@ public class BenefitServiceImpl implements BenefitService {
                         id);
 
         if (duplicated) {
-            throw new RuntimeException(
-                    "Tiện ích này đã tồn tại");
+            throw new DuplicateResourceException("Tiện ích này đã tồn tại");
         }
 
         BenefitMapper.updateEntity(benefit, request);
@@ -102,7 +102,7 @@ public class BenefitServiceImpl implements BenefitService {
     @Transactional
     public void deleteBenefit(Long id) {
         Benefit benefit = benefitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tiện ích"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tiện ích"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
@@ -110,8 +110,7 @@ public class BenefitServiceImpl implements BenefitService {
                 .getOwner()
                 .getId()
                 .equals(currentUser.getId())) {
-            throw new RuntimeException(
-                    "Bạn không có quyền xóa tiện ích này");
+            throw new AccessDeniedException("Bạn không có quyền xóa tiện ích này");
         }
 
         benefitRepository.delete(benefit);

@@ -3,6 +3,7 @@ package com.nguyencong.fieldmate.controller;
 import java.io.IOException;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,16 +20,14 @@ import com.nguyencong.fieldmate.dto.response.VenueImageResponse;
 import com.nguyencong.fieldmate.service.VenueImageService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Venue Image")
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 @PreAuthorize("hasRole('COURT_OWNER')")
 public class ApiVenueImageController {
-
-    private final VenueImageService venueImageService;
+    @Autowired
+    private VenueImageService venueImageService;
 
     @PostMapping(value = "/secure/venues/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<VenueImageResponse>> uploadVenueImages(

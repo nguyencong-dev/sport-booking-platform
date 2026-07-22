@@ -14,7 +14,6 @@ from fastapi.security import (
 from app.core.config import settings
 from app.schemas.auth import CurrentUser
 
-
 bearer_scheme = HTTPBearer(
     auto_error=False,
 )
@@ -36,10 +35,7 @@ def get_current_user(
 
     try:
         response = httpx.get(
-            (
-                f"{settings.fieldmate_api_base_url.rstrip('/')}"
-                "/api/secure/users/me"
-            ),
+            (f"{settings.fieldmate_api_base_url.rstrip('/')}" "/api/secure/users/me"),
             headers={
                 "Authorization": f"Bearer {token}",
             },

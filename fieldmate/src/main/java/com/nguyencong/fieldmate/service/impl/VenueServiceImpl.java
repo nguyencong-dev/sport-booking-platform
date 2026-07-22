@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,8 @@ import com.nguyencong.fieldmate.dto.response.VenueResponse.Summary;
 import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
+import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.VenueMapper;
 import com.nguyencong.fieldmate.repository.VenueRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
@@ -49,7 +52,7 @@ public class VenueServiceImpl implements VenueService {
 
     public Venue findVenue(Long id) {
         return venueRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sân"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
     }
 
     @Override
@@ -93,7 +96,7 @@ public class VenueServiceImpl implements VenueService {
         User owner = currentUserProvider.getCurrentUser();
 
         if (!venue.getOwner().getId().equals(owner.getId())) {
-            throw new RuntimeException("Bạn không có quyền thao tác sân này");
+            throw new AccessDeniedException("Bạn không có quyền thao tác sân này");
         }
 
         VenueMapper.updateEntity(venue, request);
@@ -126,7 +129,7 @@ public class VenueServiceImpl implements VenueService {
         User owner = currentUserProvider.getCurrentUser();
 
         if (!venue.getOwner().getId().equals(owner.getId())) {
-            throw new RuntimeException("Bạn không có quyền thao tác sân này");
+            throw new AccessDeniedException("Bạn không có quyền thao tác sân này");
         }
 
         venueRepository.delete(venue);
@@ -142,15 +145,15 @@ public class VenueServiceImpl implements VenueService {
         boolean isOwner = venue.getOwner().getId().equals(currentUser.getId());
 
         if (!isAdmin && !isOwner) {
-            throw new RuntimeException("Bạn không có quyền đổi trạng thái sân này");
+            throw new AccessDeniedException("Bạn không có quyền đổi trạng thái sân này");
         }
 
         if (!isAdmin && (venue.getStatus() == StatusVenue.PENDING || venue.getStatus() == StatusVenue.REJECTED)) {
-            throw new RuntimeException("Sân đang chờ duyệt hoặc đã bị từ chối, chủ sân không thể đổi trạng thái");
+            throw new BusinessRuleViolationException("Sân đang chờ duyệt hoặc đã bị từ chối, chủ sân không thể đổi trạng thái");
         }
 
         if (!isAdmin && status != StatusVenue.ACTIVE && status != StatusVenue.INACTIVE) {
-            throw new RuntimeException("Chủ sân chỉ được bật hoặc tắt sân");
+            throw new AccessDeniedException("Chủ sân chỉ được bật hoặc tắt sân");
         }
 
         venue.setStatus(status);

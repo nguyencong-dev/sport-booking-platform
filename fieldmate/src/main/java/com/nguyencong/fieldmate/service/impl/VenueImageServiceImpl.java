@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,9 @@ import com.nguyencong.fieldmate.dto.response.VenueImageResponse;
 import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.VenueImage;
+import com.nguyencong.fieldmate.exception.BadRequestException;
+import com.nguyencong.fieldmate.exception.FileUploadException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.VenueImageMapper;
 import com.nguyencong.fieldmate.repository.VenueImageRepository;
 import com.nguyencong.fieldmate.repository.VenueRepository;
@@ -38,16 +42,16 @@ public class VenueImageServiceImpl implements VenueImageService {
             Long venueId,
             List<MultipartFile> images) throws IOException {
         Venue venue = venueRepository.findById(venueId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sân"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
         if (!venue.getOwner().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Bạn không có quyền thêm ảnh cho sân này");
+            throw new AccessDeniedException("Bạn không có quyền thêm ảnh cho sân này");
         }
 
         if (images == null || images.isEmpty()) {
-            throw new RuntimeException("Danh sách ảnh không được để trống");
+            throw new BadRequestException("Danh sách ảnh không được để trống");
         }
 
         List<VenueImage> uploadedImages = new ArrayList<>();
@@ -63,12 +67,16 @@ public class VenueImageServiceImpl implements VenueImageService {
 
             Object secureUrl = uploadResult.get("secure_url");
             if (!(secureUrl instanceof String imageUrl)) {
-                throw new RuntimeException("Cloudinary không trả về URL ảnh");
+                throw new FileUploadException("Cloudinary không trả về URL ảnh");
             }
 
             VenueImage venueImage = VenueImage.builder().venue(venue).url(imageUrl).build();
 
             uploadedImages.add(venueImageRepository.save(venueImage));
+        }
+
+        if (uploadedImages.isEmpty()) {
+            throw new BadRequestException("Không có ảnh hợp lệ để tải lên");
         }
 
         return uploadedImages.stream()
@@ -80,12 +88,12 @@ public class VenueImageServiceImpl implements VenueImageService {
     @Transactional
     public void deleteVenueImage(Long id) {
         VenueImage image = venueImageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh của sân"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ảnh của sân"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
         if (!image.getVenue().getOwner().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Bạn không có quyền xóa ảnh của sân này");
+            throw new AccessDeniedException("Bạn không có quyền xóa ảnh của sân này");
         }
 
         venueImageRepository.delete(image);

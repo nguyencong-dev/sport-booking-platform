@@ -2,6 +2,7 @@ package com.nguyencong.fieldmate.security;
 
 import org.springframework.stereotype.Component;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.repository.UserRepository;
@@ -17,6 +18,6 @@ public class CurrentUserProvider {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng đăng nhập"));
     }
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.exception.DuplicateResourceException;
 import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
 import com.nguyencong.fieldmate.service.AuthService;
@@ -35,8 +37,12 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserResponse registerUser(RegisterRequest request) throws IOException {
-        User user = new User();
+        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
+            throw new DuplicateResourceException(
+                    "Email đã được sử dụng");
+        }
 
+        User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhoneNumber(request.getPhoneNumber());
@@ -60,7 +66,8 @@ public class AuthServiceImpl implements AuthService {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow();
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "Không tìm thấy người dùng"));
         String token = JwtTokenProvider.generateToken(user.getEmail());
         return new AuthResponse(token);
     }

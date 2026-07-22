@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.nguyencong.fieldmate.dto.request.SportTypeRequest;
 import com.nguyencong.fieldmate.dto.response.SportTypeResponse;
 import com.nguyencong.fieldmate.entity.SportType;
+import com.nguyencong.fieldmate.exception.DuplicateResourceException;
+import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.SportTypeMapper;
 import com.nguyencong.fieldmate.repository.SportTypeResponsitory;
 import com.nguyencong.fieldmate.service.SportTypeService;
@@ -31,7 +33,7 @@ public class SportTypeServiceImpl implements SportTypeService {
         String name = request.getName().trim();
 
         if (sportTypeRepository.existsByNameIgnoreCase(name)) {
-            throw new RuntimeException("Loại thể thao đã tồn tại");
+            throw new DuplicateResourceException("Loại thể thao đã tồn tại");
         }
 
         SportType sportType = SportTypeMapper.toEntity(request);
@@ -43,12 +45,12 @@ public class SportTypeServiceImpl implements SportTypeService {
     @Override
     public SportTypeResponse updateSportType(Long id, SportTypeRequest request) {
         SportType sportType = sportTypeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại thể thao"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại thể thao"));
 
         String name = request.getName().trim();
 
         if (sportTypeRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
-            throw new RuntimeException("Loại thể thao đã tồn tại");
+            throw new DuplicateResourceException("Loại thể thao đã tồn tại");
         }
 
         SportTypeMapper.updateEntity(sportType, request);
@@ -59,7 +61,7 @@ public class SportTypeServiceImpl implements SportTypeService {
     @Override
     public void deleteSportType(Long id) {
         SportType sportType = sportTypeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại thể thao này"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại thể thao này"));
 
         sportTypeRepository.delete(sportType);
     }

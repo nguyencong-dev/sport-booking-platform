@@ -10,5 +10,6 @@ import com.nguyencong.fieldmate.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     List<User> findAllByOrderByIdDesc();
+    boolean existsByEmailIgnoreCase(String email);
 }
 

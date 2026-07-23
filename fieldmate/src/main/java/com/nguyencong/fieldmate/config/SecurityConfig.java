@@ -38,8 +38,11 @@ public class SecurityConfig {
                 .securityMatcher("/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**",
+                        .requestMatchers(
+                                "/api/auth/**",
                                 "/swagger-ui/**",
+                                "/api/payments/momo/ipn",
+                                "/api/payments/momo/return",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**")
                         .permitAll()

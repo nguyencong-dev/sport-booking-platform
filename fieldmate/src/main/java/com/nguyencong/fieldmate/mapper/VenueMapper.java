@@ -2,7 +2,6 @@ package com.nguyencong.fieldmate.mapper;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
-import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 

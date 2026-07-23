@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException exception, WebRequest request) {
 
-        return build(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này", request);
+        return build(HttpStatus.FORBIDDEN, "Không có quyền thực hiện thao tác này", request);
     }
 
     @ExceptionHandler(AuthenticationException.class)

@@ -11,15 +11,6 @@ import lombok.Getter;
 @Configuration
 public class MomoConfig {
 
-    @Value("${momo.partner-code}")
-    private String partnerCode;
-
-    @Value("${momo.access-key}")
-    private String accessKey;
-
-    @Value("${momo.secret-key}")
-    private String secretKey;
-
     @Value("${momo.base-url}")
     private String baseUrl;
 

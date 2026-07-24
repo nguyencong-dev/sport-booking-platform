@@ -48,11 +48,7 @@ public class Booking {
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalPrice;
 
-    @Column(
-            name = "required_deposit",
-            nullable = false,
-            precision = 12,
-            scale = 2)
+    @Column(name = "required_deposit", nullable = false, precision = 12, scale = 2)
     private BigDecimal requiredDeposit;
 
     @Enumerated(EnumType.STRING)
@@ -60,11 +56,7 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
-    @OneToMany(
-            mappedBy = "booking",
-            fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 

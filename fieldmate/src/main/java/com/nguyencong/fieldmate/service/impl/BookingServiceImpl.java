@@ -7,8 +7,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +44,9 @@ public class BookingServiceImpl implements BookingService {
 
     private static final BigDecimal DEPOSIT_RATE = new BigDecimal("0.30");
 
+    @Value("${booking.payment-timeout-minutes:15}")
+    private long paymentTimeoutMinutes;
+
     @Autowired
     private BookingRepository bookingRepository;
     @Autowired
@@ -68,12 +73,16 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessRuleViolationException("Cụm sân hiện không hoạt động");
         }
 
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(paymentTimeoutMinutes);
+
         boolean overlapping = bookingRepository.existsOverlappingBooking(
                 court.getId(),
                 request.getBookingDate(),
                 request.getStartTime(),
                 request.getEndTime(),
-                BookingStatus.CANCELLED);
+                Set.of(BookingStatus.CANCELLED, BookingStatus.EXPIRED),
+                BookingStatus.PENDING,
+                cutoff);
 
         if (overlapping) {
             throw new BusinessRuleViolationException("Khung giờ này đã được đặt");

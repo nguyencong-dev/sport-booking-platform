@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,15 +12,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nguyencong.fieldmate.config.VnPayConfig;
 import com.nguyencong.fieldmate.dto.request.MomoIpnRequest;
 import com.nguyencong.fieldmate.dto.request.PaymentRequest;
 import com.nguyencong.fieldmate.dto.response.PaymentResponse;
+import com.nguyencong.fieldmate.dto.response.VnPayIpnResponse;
 import com.nguyencong.fieldmate.entity.Booking;
 import com.nguyencong.fieldmate.entity.MomoCredential;
 import com.nguyencong.fieldmate.entity.OwnerPaymentAccount;
 import com.nguyencong.fieldmate.entity.Payment;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.entity.VnPayCredential;
 import com.nguyencong.fieldmate.entity.enums.BookingStatus;
 import com.nguyencong.fieldmate.entity.enums.PaymentAccountStatus;
 import com.nguyencong.fieldmate.entity.enums.PaymentMethod;
@@ -38,10 +44,12 @@ import com.nguyencong.fieldmate.repository.BookingRepository;
 import com.nguyencong.fieldmate.repository.MomoCredentialRepository;
 import com.nguyencong.fieldmate.repository.OwnerPaymentAccountRepository;
 import com.nguyencong.fieldmate.repository.PaymentRepository;
+import com.nguyencong.fieldmate.repository.VnPayCredentialRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.CredentialEncryptionService;
 import com.nguyencong.fieldmate.service.PaymentService;
 import com.nguyencong.fieldmate.utils.HmacUtils;
+import com.nguyencong.fieldmate.utils.VnPayUtils;
 import java.security.MessageDigest;
 
 @Service
@@ -61,7 +69,11 @@ public class PaymentServiceImpl implements PaymentService {
     @Autowired
     private MomoCredentialRepository momoCredentialRepository;
     @Autowired
+    private VnPayCredentialRepository vnPayCredentialRepository;
+    @Autowired
     private CredentialEncryptionService credentialEncryptionService;
+    @Autowired
+    private VnPayConfig vnPayConfig;
 
     @Override
     @Transactional
@@ -306,37 +318,7 @@ public class PaymentServiceImpl implements PaymentService {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
-        payment.setStatus(PaymentStatus.PAID);
-        payment.setPaidAt(now);
-
-        paymentRepository.save(payment);
-
-        Booking booking = payment.getBooking();
-
-        LocalDateTime cutoff = now.minusMinutes(paymentTimeoutMinutes);
-
-        boolean bookingTimedOut = booking.getCreatedAt() != null && !booking.getCreatedAt().isAfter(cutoff);
-
-        boolean bookingExpired = booking.getStatus() == BookingStatus.EXPIRED
-                || (booking.getStatus() == BookingStatus.PENDING && bookingTimedOut);
-
-        if (bookingExpired) {
-            return;
-        }
-
-        BigDecimal paidAmount = booking.getPayments()
-                .stream()
-                .filter(item -> item.getStatus() == PaymentStatus.PAID)
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (booking.getStatus() == BookingStatus.PENDING && paidAmount.compareTo(booking.getRequiredDeposit()) >= 0) {
-
-            booking.setStatus(BookingStatus.CONFIRMED);
-            bookingRepository.save(booking);
-        }
+        markPaymentPaid(payment);
     }
 
     private void validateMomoIpnSignature(MomoIpnRequest request, MomoCredential credential) {
@@ -366,6 +348,167 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (!valid) {
             throw new BadRequestException("Chữ ký IPN MoMo không hợp lệ");
+        }
+    }
+
+    @Override
+    @Transactional
+    public VnPayIpnResponse handleVnPayIpn(Map<String, String> parameters) {
+
+        if (!hasRequiredVnPayParameters(parameters)) {
+            return new VnPayIpnResponse("99", "Invalid request");
+        }
+
+        Payment payment = paymentRepository.findByTransactionCode(parameters.get("vnp_TxnRef")).orElse(null);
+
+        if (payment == null || payment.getPaymentMethod() != PaymentMethod.VNPAY) {
+            return new VnPayIpnResponse("01", "Order not found");
+        }
+
+        try {
+            OwnerPaymentAccount account = payment.getPaymentAccount();
+
+            if (account == null || account.getProvider() != PaymentProvider.VNPAY) {
+                return new VnPayIpnResponse("99", "Invalid payment account");
+            }
+
+            VnPayCredential credential = vnPayCredentialRepository.findByPaymentAccount_Id(account.getId())
+                    .orElse(null);
+
+            if (credential == null) {
+                return new VnPayIpnResponse("99", "Credential not found");
+            }
+
+            String tmnCode = parameters.get("vnp_TmnCode");
+
+            if (!credential.getTmnCode().equals(tmnCode)) {
+                return new VnPayIpnResponse("97", "Invalid signature");
+            }
+
+            String hashSecret = credentialEncryptionService.decrypt(credential.getHashSecret());
+
+            if (!VnPayUtils.hasValidSignature(parameters, hashSecret)) {
+                return new VnPayIpnResponse("97", "Invalid signature");
+            }
+
+            BigDecimal vnPayAmount;
+
+            try {
+                vnPayAmount = new BigDecimal(parameters.get("vnp_Amount")).movePointLeft(2);
+            } catch (NumberFormatException exception) {
+                return new VnPayIpnResponse("04", "Invalid amount");
+            }
+
+            if (payment.getAmount().compareTo(vnPayAmount) != 0) {
+                return new VnPayIpnResponse("04", "Invalid amount");
+            }
+
+            if (payment.getStatus() == PaymentStatus.PAID
+                    || payment.getStatus() == PaymentStatus.REFUNDED) {
+                return new VnPayIpnResponse("02", "Order already confirmed");
+            }
+
+            boolean successful = "00".equals(parameters.get("vnp_ResponseCode"))
+                    && "00".equals(parameters.get("vnp_TransactionStatus"));
+
+            if (successful) {
+                markPaymentPaid(payment);
+            } else if (payment.getStatus() == PaymentStatus.PENDING) {
+                payment.setStatus(PaymentStatus.FAILED);
+                paymentRepository.save(payment);
+            }
+
+            return new VnPayIpnResponse("00", "Confirm success");
+        } catch (Exception exception) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new VnPayIpnResponse("99", "Unknown error");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String handleVnPayReturn(Map<String, String> parameters) {
+
+        String transactionCode = parameters.get("vnp_TxnRef");
+        Payment payment = transactionCode == null
+                ? null
+                : paymentRepository.findByTransactionCode(transactionCode).orElse(null);
+
+        boolean signatureValid = false;
+
+        if (payment != null
+                && payment.getPaymentMethod() == PaymentMethod.VNPAY
+                && payment.getPaymentAccount() != null
+                && payment.getPaymentAccount().getProvider() == PaymentProvider.VNPAY) {
+
+            VnPayCredential credential = vnPayCredentialRepository
+                    .findByPaymentAccount_Id(payment.getPaymentAccount().getId())
+                    .orElse(null);
+
+            if (credential != null
+                    && credential.getTmnCode().equals(parameters.get("vnp_TmnCode"))) {
+                try {
+                    String hashSecret = credentialEncryptionService.decrypt(credential.getHashSecret());
+                    signatureValid = VnPayUtils.hasValidSignature(parameters, hashSecret);
+                } catch (RuntimeException ignored) {
+                    signatureValid = false;
+                }
+            }
+        }
+
+        UriComponentsBuilder redirect = UriComponentsBuilder
+                .fromUriString(vnPayConfig.getFrontendReturnUrl())
+                .queryParam("transactionCode", transactionCode)
+                .queryParam("responseCode", parameters.get("vnp_ResponseCode"))
+                .queryParam("signatureValid", signatureValid);
+
+        if (payment != null) {
+            redirect.queryParam("paymentId", payment.getId());
+        }
+
+        return redirect.build().encode().toUriString();
+    }
+
+    private boolean hasRequiredVnPayParameters(Map<String, String> parameters) {
+        return parameters.get("vnp_TxnRef") != null
+                && parameters.get("vnp_Amount") != null
+                && parameters.get("vnp_TmnCode") != null
+                && parameters.get("vnp_ResponseCode") != null
+                && parameters.get("vnp_TransactionStatus") != null
+                && parameters.get("vnp_SecureHash") != null;
+    }
+
+    private void markPaymentPaid(Payment payment) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        payment.setStatus(PaymentStatus.PAID);
+        payment.setPaidAt(now);
+        paymentRepository.save(payment);
+
+        Booking booking = payment.getBooking();
+        LocalDateTime cutoff = now.minusMinutes(paymentTimeoutMinutes);
+
+        boolean bookingTimedOut = booking.getCreatedAt() != null
+                && !booking.getCreatedAt().isAfter(cutoff);
+
+        boolean bookingExpired = booking.getStatus() == BookingStatus.EXPIRED
+                || (booking.getStatus() == BookingStatus.PENDING && bookingTimedOut);
+
+        if (bookingExpired) {
+            return;
+        }
+
+        BigDecimal paidAmount = booking.getPayments()
+                .stream()
+                .filter(item -> item.getStatus() == PaymentStatus.PAID)
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (booking.getStatus() == BookingStatus.PENDING
+                && paidAmount.compareTo(booking.getRequiredDeposit()) >= 0) {
+            booking.setStatus(BookingStatus.CONFIRMED);
+            bookingRepository.save(booking);
         }
     }
 

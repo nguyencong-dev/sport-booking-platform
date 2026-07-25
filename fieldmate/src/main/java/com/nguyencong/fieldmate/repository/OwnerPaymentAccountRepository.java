@@ -1,5 +1,6 @@
 package com.nguyencong.fieldmate.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,8 +11,14 @@ import com.nguyencong.fieldmate.entity.enums.PaymentProvider;
 
 public interface OwnerPaymentAccountRepository extends JpaRepository<OwnerPaymentAccount, Long> {
 
-    Optional<OwnerPaymentAccount> findByOwner_IdAndProviderAndStatus(Long ownerId, PaymentProvider provider,
-            PaymentAccountStatus status);
+        Optional<OwnerPaymentAccount> findByOwner_IdAndProviderAndStatus(Long ownerId, PaymentProvider provider,
+                        PaymentAccountStatus status);
 
-    boolean existsByOwner_IdAndProvider(Long ownerId, PaymentProvider provider);
+        boolean existsByOwner_IdAndProvider(Long ownerId, PaymentProvider provider);
+
+        List<OwnerPaymentAccount> findByOwner_IdOrderByCreatedAtDesc(Long ownerId);
+
+        List<OwnerPaymentAccount> findAllByOrderByCreatedAtDesc();
+
+        List<OwnerPaymentAccount> findByStatusOrderByCreatedAtDesc(PaymentAccountStatus status);
 }

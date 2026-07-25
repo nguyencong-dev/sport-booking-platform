@@ -9,5 +9,8 @@ import com.nguyencong.fieldmate.entity.MomoCredential;
 public interface MomoCredentialRepository extends JpaRepository<MomoCredential, Long> {
 
     Optional<MomoCredential> findByPaymentAccount_Id(Long paymentAccountId);
+
     boolean existsByPartnerCode(String partnerCode);
+
+    boolean existsByPartnerCodeAndPaymentAccount_IdNot(String partnerCode, Long paymentAccountId);
 }

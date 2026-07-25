@@ -1,6 +1,8 @@
 package com.nguyencong.fieldmate.controller;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,11 +13,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nguyencong.fieldmate.dto.request.MomoIpnRequest;
 import com.nguyencong.fieldmate.dto.request.PaymentRequest;
 import com.nguyencong.fieldmate.dto.response.PaymentResponse;
+import com.nguyencong.fieldmate.dto.response.VnPayIpnResponse;
 import com.nguyencong.fieldmate.service.PaymentService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -56,5 +60,23 @@ public class ApiPaymentController {
         this.paymentService.handleMomoIpn(request);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/payments/vnpay/ipn")
+    public ResponseEntity<VnPayIpnResponse> handleVnPayIpn(
+            @RequestParam Map<String, String> parameters) {
+
+        return new ResponseEntity<>(this.paymentService.handleVnPayIpn(parameters), HttpStatus.OK);
+    }
+
+    @GetMapping("/payments/vnpay/return")
+    public ResponseEntity<Void> handleVnPayReturn(
+            @RequestParam Map<String, String> parameters) {
+
+        URI redirectUrl = URI.create(this.paymentService.handleVnPayReturn(parameters));
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(redirectUrl)
+                .build();
     }
 }

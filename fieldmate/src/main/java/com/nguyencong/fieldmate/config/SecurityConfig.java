@@ -43,6 +43,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/api/payments/momo/ipn",
                                 "/api/payments/momo/return",
+                                "/api/payments/vnpay/ipn",
+                                "/api/payments/vnpay/return",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**")
                         .permitAll()

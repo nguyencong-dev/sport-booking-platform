@@ -2,9 +2,9 @@ package com.nguyencong.fieldmate.controller;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +28,10 @@ public class ApiVenueController {
     private VenueService venueService;
 
     @GetMapping("/venues")
-    public ResponseEntity<List<VenueResponse.Summary>> getAllVenues(@RequestParam Map<String, String> params) {
-        return new ResponseEntity<>(this.venueService.getAllVenues(params), HttpStatus.OK);
+    public ResponseEntity<Page<VenueResponse.Summary>> getAllVenues(@RequestParam(required = false) String name,
+            @RequestParam(required = false) Long sportTypeId, @RequestParam(required = false) StatusVenue status,
+            @RequestParam(defaultValue = "0") int page) {
+        return new ResponseEntity<>(this.venueService.getAllVenues(name, sportTypeId, status, page), HttpStatus.OK);
     }
 
     @GetMapping("/venues/{id}")
@@ -60,8 +62,7 @@ public class ApiVenueController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'COURT_OWNER')")
     @PatchMapping("/secure/venues/{id}/status")
-    public ResponseEntity<VenueResponse.Summary> updateVenueStatus(
-            @PathVariable Long id,
+    public ResponseEntity<VenueResponse.Summary> updateVenueStatus(@PathVariable Long id,
             @RequestParam StatusVenue status) {
         return new ResponseEntity<>(venueService.updateVenueStatus(id, status), HttpStatus.OK);
     }

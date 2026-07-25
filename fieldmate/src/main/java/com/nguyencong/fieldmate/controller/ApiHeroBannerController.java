@@ -30,7 +30,6 @@ public class ApiHeroBannerController {
     @Autowired
     private HeroBannerService heroBannerService;
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/banners")
     public ResponseEntity<List<HeroBannerResponse>> getAllHeroBanners() {
 

@@ -2,14 +2,15 @@ package com.nguyencong.fieldmate.service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
+
+import org.springframework.data.domain.Page;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
 public interface VenueService {
-    List<VenueResponse.Summary> getAllVenues(Map<String, String> params);
+    Page<VenueResponse.Summary> getAllVenues(String name, Long sportTypeId, StatusVenue status, int page);
 
     VenueResponse.Detail getVenueById(Long id);
 

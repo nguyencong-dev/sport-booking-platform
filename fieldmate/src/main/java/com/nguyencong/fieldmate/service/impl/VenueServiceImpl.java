@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import com.nguyencong.fieldmate.mapper.VenueMapper;
 import com.nguyencong.fieldmate.repository.VenueRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.VenueService;
+import com.nguyencong.fieldmate.utils.PaginationUtils;
 
 @Service
 public class VenueServiceImpl implements VenueService {
@@ -37,22 +40,16 @@ public class VenueServiceImpl implements VenueService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<VenueResponse.Summary> getAllVenues(Map<String, String> params) {
-        String name = params.get("name");
-        List<Venue> venues;
-        if (name != null && !name.isBlank()) {
-            venues = venueRepository.findByNameContainingIgnoreCase(name.trim());
-        } else {
-            venues = venueRepository.findAll();
-        }
-        return venues.stream()
-                .map(VenueMapper::toSummary)
-                .toList();
+    public Page<VenueResponse.Summary> getAllVenues(String name, Long sportTypeId, StatusVenue status, int page) {
+        Pageable pageable = PaginationUtils.createPageable(page);
+
+        String normalizedName = name == null || name.isBlank() ? null : name.trim();
+
+        return venueRepository.findByFilters(normalizedName, sportTypeId, status, pageable).map(VenueMapper::toSummary);
     }
 
     public Venue findVenue(Long id) {
-        return venueRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
+        return venueRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
     }
 
     @Override
@@ -70,16 +67,14 @@ public class VenueServiceImpl implements VenueService {
         venue.setOwner(owner);
 
         if (request.getBanner() != null && !request.getBanner().isEmpty()) {
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    request.getBanner().getBytes(),
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getBanner().getBytes(),
                     Map.of("folder", "fieldmate/venues/banners"));
 
             venue.setBanner((String) uploadResult.get("secure_url"));
         }
 
         if (request.getLogo() != null && !request.getLogo().isEmpty()) {
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    request.getLogo().getBytes(),
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getLogo().getBytes(),
                     Map.of("folder", "fieldmate/venues/logos"));
 
             venue.setLogo((String) uploadResult.get("secure_url"));
@@ -102,8 +97,7 @@ public class VenueServiceImpl implements VenueService {
         VenueMapper.updateEntity(venue, request);
 
         if (request.getBanner() != null && !request.getBanner().isEmpty()) {
-            Map uploadResult = cloudinary.uploader().upload(
-                    request.getBanner().getBytes(),
+            Map uploadResult = cloudinary.uploader().upload(request.getBanner().getBytes(),
                     Map.of("folder", "fieldmate/venues/banners"));
 
             venue.setBanner((String) uploadResult.get("secure_url"));
@@ -149,7 +143,8 @@ public class VenueServiceImpl implements VenueService {
         }
 
         if (!isAdmin && (venue.getStatus() == StatusVenue.PENDING || venue.getStatus() == StatusVenue.REJECTED)) {
-            throw new BusinessRuleViolationException("Sân đang chờ duyệt hoặc đã bị từ chối, chủ sân không thể đổi trạng thái");
+            throw new BusinessRuleViolationException(
+                    "Sân đang chờ duyệt hoặc đã bị từ chối, chủ sân không thể đổi trạng thái");
         }
 
         if (!isAdmin && status != StatusVenue.ACTIVE && status != StatusVenue.INACTIVE) {
@@ -165,10 +160,7 @@ public class VenueServiceImpl implements VenueService {
     @Override
     @Transactional(readOnly = true)
     public List<VenueResponse.Summary> getPendingVenues() {
-        return venueRepository.findByStatus(StatusVenue.PENDING)
-                .stream()
-                .map(VenueMapper::toSummary)
-                .toList();
+        return venueRepository.findByStatus(StatusVenue.PENDING).stream().map(VenueMapper::toSummary).toList();
     }
 
 }

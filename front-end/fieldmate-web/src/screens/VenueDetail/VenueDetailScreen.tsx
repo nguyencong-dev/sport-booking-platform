@@ -33,6 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VenueMap } from "@/components/VenueMap/VenueMap";
 import { courtService } from "@/services/court.service";
 import { venueService } from "@/services/venue.service";
 import type { CourtResponse, CourtStatus } from "@/types/court";
@@ -443,6 +444,15 @@ export function VenueDetailScreen({
                   </CardContent>
                 </Card>
               </div>
+            </section>
+
+            <section className="mt-8 w-full">
+              <VenueMap
+                venueName={venue.name}
+                address={venue.address}
+                latitude={venue.latitude}
+                longitude={venue.longitude}
+              />
             </section>
           </>
         )}

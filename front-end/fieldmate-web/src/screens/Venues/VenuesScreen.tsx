@@ -162,9 +162,6 @@ export function VenuesScreen() {
           <h1 className="text-3xl font-black tracking-[-0.04em] text-[#073b77] sm:text-4xl">
             Sân tập thể thao gần bạn
           </h1>
-          <p className="mt-3 max-w-2xl text-slate-500">
-            Tìm sân phù hợp, xem thông tin chi tiết và đặt lịch nhanh chóng.
-          </p>
         </div>
 
         <div className="grid items-start gap-7 lg:grid-cols-[260px_minmax(0,1fr)]">

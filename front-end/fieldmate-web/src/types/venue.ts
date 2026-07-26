@@ -8,8 +8,8 @@ export type VenueSummaryResponse = {
   id: number;
   name: string;
   address: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   banner: string | null;
   logo: string | null;
   status: VenueStatus;

@@ -9,4 +9,12 @@ export const courtService = {
 
     return response.data;
   },
+
+  async getById(courtId: number) {
+    const response = await fieldmateClient.get<CourtResponse>(
+      `/courts/${courtId}`,
+    );
+
+    return response.data;
+  },
 };

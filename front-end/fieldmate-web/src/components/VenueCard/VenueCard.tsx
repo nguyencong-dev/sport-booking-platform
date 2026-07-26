@@ -125,14 +125,25 @@ export function VenueCard({ venue }: VenueCardProps) {
           <ArrowRight className="size-3.5" />
         </Button>
 
-        <Button
-          nativeButton={false}
-          render={<Link href={`/venues/${venue.id}/booking`} />}
-          className="h-10 w-full rounded-xl bg-[#ff174f] px-3 text-xs font-bold text-white shadow-sm shadow-rose-500/20 hover:bg-[#e8003e]"
-        >
-          <CalendarCheck className="size-3.5" />
-          Đặt sân ngay
-        </Button>
+        {venue.status === "ACTIVE" ? (
+          <Button
+            nativeButton={false}
+            render={<Link href={`/venues/${venue.id}/booking`} />}
+            className="h-10 w-full rounded-xl bg-[#ff174f] px-3 text-xs font-bold text-white shadow-sm shadow-rose-500/20 hover:bg-[#e8003e]"
+          >
+            <CalendarCheck className="size-3.5" />
+            Đặt sân ngay
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            disabled
+            className="h-10 w-full rounded-xl px-3 text-xs font-bold"
+          >
+            <CalendarCheck className="size-3.5" />
+            Không thể đặt
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

@@ -69,9 +69,10 @@ export function VenuesScreen() {
   const [searchName, setSearchName] = useState("");
   const [selectedSport, setSelectedSport] = useState<number | "">("");
   const [selectedStatus, setSelectedStatus] = useState<VenueStatus | "">("");
+  const [pendingSport, setPendingSport] = useState<number | "">("");
+  const [pendingStatus, setPendingStatus] = useState<VenueStatus | "">("");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -89,7 +90,6 @@ export function VenuesScreen() {
 
       setVenues(pageData.content);
       setTotalPages(pageData.totalPages);
-      setTotalElements(pageData.totalElements);
     } catch (requestError) {
       if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
         setError(
@@ -143,6 +143,14 @@ export function VenuesScreen() {
     setSearchName("");
     setSelectedSport("");
     setSelectedStatus("");
+    setPendingSport("");
+    setPendingStatus("");
+    setPage(0);
+  }
+
+  function applyFilters() {
+    setSelectedSport(pendingSport);
+    setSelectedStatus(pendingStatus);
     setPage(0);
   }
 
@@ -191,11 +199,8 @@ export function VenuesScreen() {
                     type="radio"
                     name="sport-type"
                     value=""
-                    checked={selectedSport === ""}
-                    onChange={() => {
-                      setSelectedSport("");
-                      setPage(0);
-                    }}
+                    checked={pendingSport === ""}
+                    onChange={() => setPendingSport("")}
                     className="size-4 accent-[#ff174f]"
                   />
                   Tất cả bộ môn
@@ -209,11 +214,8 @@ export function VenuesScreen() {
                       type="radio"
                       name="sport-type"
                       value={sportType.id}
-                      checked={selectedSport === sportType.id}
-                      onChange={() => {
-                        setSelectedSport(sportType.id);
-                        setPage(0);
-                      }}
+                      checked={pendingSport === sportType.id}
+                      onChange={() => setPendingSport(sportType.id)}
                       className="size-4 accent-[#ff174f]"
                     />
                     {sportType.name}
@@ -238,11 +240,8 @@ export function VenuesScreen() {
                       type="radio"
                       name="venue-status"
                       value={status.value}
-                      checked={selectedStatus === status.value}
-                      onChange={() => {
-                        setSelectedStatus(status.value);
-                        setPage(0);
-                      }}
+                      checked={pendingStatus === status.value}
+                      onChange={() => setPendingStatus(status.value)}
                       className="size-4 accent-[#ff174f]"
                     />
                     {status.label}
@@ -253,7 +252,7 @@ export function VenuesScreen() {
 
             <Button
               type="button"
-              onClick={loadVenues}
+              onClick={applyFilters}
               className="mt-6 h-11 w-full rounded-xl bg-[#073b77] font-bold text-white hover:bg-[#052f61]"
             >
               Áp dụng
@@ -287,11 +286,6 @@ export function VenuesScreen() {
                 <h2 className="text-xl font-extrabold text-[#073b77]">
                   Danh sách sân tập
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {loading
-                    ? "Đang cập nhật dữ liệu..."
-                    : `${totalElements} sân trên hệ thống`}
-                </p>
               </div>
               {(searchName || selectedSport || selectedStatus) && (
                 <button

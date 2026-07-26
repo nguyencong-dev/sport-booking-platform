@@ -29,9 +29,11 @@ public class ApiVenueController {
 
     @GetMapping("/venues")
     public ResponseEntity<Page<VenueResponse.Summary>> getAllVenues(@RequestParam(required = false) String name,
+            @RequestParam(required = false) String address,
             @RequestParam(required = false) Long sportTypeId, @RequestParam(required = false) StatusVenue status,
             @RequestParam(defaultValue = "0") int page) {
-        return new ResponseEntity<>(this.venueService.getAllVenues(name, sportTypeId, status, page), HttpStatus.OK);
+        return new ResponseEntity<>(this.venueService.getAllVenues(name, address, sportTypeId, status, page),
+                HttpStatus.OK);
     }
 
     @GetMapping("/venues/{id}")

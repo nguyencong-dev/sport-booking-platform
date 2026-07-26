@@ -8,6 +8,7 @@ import type {
 
 type GetVenuesParams = {
   name?: string;
+  address?: string;
   sportTypeId?: number;
   status?: VenueStatus;
   page?: number;
@@ -22,6 +23,7 @@ export const venueService = {
       {
         params: {
           name: params.name?.trim() || undefined,
+          address: params.address?.trim() || undefined,
           sportTypeId: params.sportTypeId,
           status: params.status,
           page: params.page ?? 0,

@@ -20,6 +20,7 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
       LEFT JOIN v.courts c
       LEFT JOIN c.sportType st
       WHERE LOWER(v.name) LIKE CONCAT('%', LOWER(COALESCE(:name, '')), '%')
+        AND LOWER(v.address) LIKE CONCAT('%', LOWER(COALESCE(:address, '')), '%')
         AND (:sportTypeId IS NULL
           OR st.id = :sportTypeId)
         AND (:status IS NULL
@@ -30,11 +31,12 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
       LEFT JOIN v.courts c
       LEFT JOIN c.sportType st
       WHERE LOWER(v.name) LIKE CONCAT('%', LOWER(COALESCE(:name, '')), '%')
+        AND LOWER(v.address) LIKE CONCAT('%', LOWER(COALESCE(:address, '')), '%')
         AND (:sportTypeId IS NULL
           OR st.id = :sportTypeId)
         AND (:status IS NULL
           OR v.status = :status)
       """)
-  Page<Venue> findByFilters(@Param("name") String name, @Param("sportTypeId") Long sportTypeId,
-      @Param("status") StatusVenue status, Pageable pageable);
+  Page<Venue> findByFilters(@Param("name") String name, @Param("address") String address,
+      @Param("sportTypeId") Long sportTypeId, @Param("status") StatusVenue status, Pageable pageable);
 }

@@ -40,12 +40,15 @@ public class VenueServiceImpl implements VenueService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<VenueResponse.Summary> getAllVenues(String name, Long sportTypeId, StatusVenue status, int page) {
+    public Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId,
+            StatusVenue status, int page) {
         Pageable pageable = PaginationUtils.createPageable(page);
 
         String normalizedName = name == null || name.isBlank() ? null : name.trim();
+        String normalizedAddress = address == null || address.isBlank() ? null : address.trim();
 
-        return venueRepository.findByFilters(normalizedName, sportTypeId, status, pageable).map(VenueMapper::toSummary);
+        return venueRepository.findByFilters(normalizedName, normalizedAddress, sportTypeId, status, pageable)
+                .map(VenueMapper::toSummary);
     }
 
     public Venue findVenue(Long id) {

@@ -10,7 +10,8 @@ import com.nguyencong.fieldmate.dto.response.VenueResponse;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
 public interface VenueService {
-    Page<VenueResponse.Summary> getAllVenues(String name, Long sportTypeId, StatusVenue status, int page);
+    Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status,
+            int page);
 
     VenueResponse.Detail getVenueById(Long id);
 

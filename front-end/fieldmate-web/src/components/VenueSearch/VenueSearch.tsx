@@ -129,11 +129,14 @@ export function VenueSearch({
     const selectedSport = sportTypes.find(
       (sportType) => String(sportType.id) === sportTypeId,
     );
+    const address = [wardName, provinceName]
+      .filter(Boolean)
+      .join(", ");
 
     await onSearch({
       name: "",
       sportTypeId: selectedSport?.id,
-      address: wardName || provinceName || undefined,
+      address: address || undefined,
     });
 
     document.getElementById("venue-list")?.scrollIntoView({

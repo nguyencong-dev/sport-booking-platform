@@ -3,13 +3,14 @@
 import axios from "axios";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CircleAlert } from "lucide-react";
+import { ArrowRight, CircleAlert, LoaderCircle } from "lucide-react";
 
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HeroBanner } from "@/components/HeroBanner/HeroBanner";
 import {
@@ -18,11 +19,16 @@ import {
 } from "@/components/VenueSearch/VenueSearch";
 import { VenueList } from "@/components/VenueList/VenueList";
 import { venueService } from "@/services/venue.service";
-import type { VenueSummaryResponse } from "@/types/venue";
+import type {
+  VenueStatus,
+  VenueSummaryResponse,
+} from "@/types/venue";
 
 type ApiErrorResponse = {
   message?: string;
 };
+
+const HOME_VENUE_STATUS: VenueStatus = "ACTIVE";
 
 function VenueListSkeleton() {
   return (
@@ -52,9 +58,15 @@ function VenueListSkeleton() {
 
 export default function HomeScreen() {
   const [venues, setVenues] = useState<VenueSummaryResponse[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  const [loadMoreError, setLoadMoreError] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<VenueSearchFilters>({
+    name: "",
+  });
 
   useEffect(() => {
     let active = true;
@@ -64,11 +76,15 @@ export default function HomeScreen() {
         setLoading(true);
         setError("");
 
-        const pageData = await venueService.getAll();
+        const pageData = await venueService.getAll({
+          status: HOME_VENUE_STATUS,
+          page: 0,
+        });
 
         if (active) {
           setVenues(pageData.content);
-          setTotalElements(pageData.totalElements);
+          setCurrentPage(pageData.number);
+          setHasMore(!pageData.last);
         }
       } catch (requestError) {
         if (!active) {
@@ -101,32 +117,20 @@ export default function HomeScreen() {
     try {
       setLoading(true);
       setError("");
+      setLoadMoreError("");
 
       const pageData = await venueService.getAll({
         name: filters.name,
+        address: filters.address,
         sportTypeId: filters.sportTypeId,
+        status: HOME_VENUE_STATUS,
         page: 0,
       });
-      let data = pageData.content;
 
-      if (filters.address) {
-        const normalizedAddress = filters.address
-          .trim()
-          .toLocaleLowerCase("vi");
-
-        data = data.filter(
-          (venue) =>
-            venue.address
-              .trim()
-              .toLocaleLowerCase("vi")
-              .includes(normalizedAddress),
-        );
-      }
-
-      setVenues(data);
-      setTotalElements(
-        filters.address ? data.length : pageData.totalElements,
-      );
+      setVenues(pageData.content);
+      setCurrentPage(pageData.number);
+      setHasMore(!pageData.last);
+      setActiveFilters(filters);
     } catch (requestError) {
       if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
         setError(
@@ -138,6 +142,50 @@ export default function HomeScreen() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleLoadMore() {
+    if (loadingMore || !hasMore) {
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+      setLoadMoreError("");
+
+      const pageData = await venueService.getAll({
+        name: activeFilters.name,
+        address: activeFilters.address,
+        sportTypeId: activeFilters.sportTypeId,
+        status: HOME_VENUE_STATUS,
+        page: currentPage + 1,
+      });
+
+      setVenues((currentVenues) => {
+        const venuesById = new Map(
+          currentVenues.map((venue) => [venue.id, venue]),
+        );
+
+        pageData.content.forEach((venue) => {
+          venuesById.set(venue.id, venue);
+        });
+
+        return Array.from(venuesById.values());
+      });
+      setCurrentPage(pageData.number);
+      setHasMore(!pageData.last);
+    } catch (requestError) {
+      if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
+        setLoadMoreError(
+          requestError.response?.data?.message ??
+            "Không thể tải thêm sân.",
+        );
+      } else {
+        setLoadMoreError("Đã xảy ra lỗi khi tải thêm sân.");
+      }
+    } finally {
+      setLoadingMore(false);
     }
   }
 
@@ -156,13 +204,8 @@ export default function HomeScreen() {
         <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-black tracking-[-0.03em] text-[#073b77] sm:text-3xl">
-              Sân tập nổi bật
+              Cụm sân hoạt động
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {loading
-                ? "Đang cập nhật dữ liệu..."
-                : `${totalElements} sân trên hệ thống`}
-            </p>
           </div>
           <Link
             href="/venues"
@@ -182,7 +225,32 @@ export default function HomeScreen() {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : (
-          <VenueList venues={venues} />
+          <>
+            <VenueList venues={venues} />
+
+            {hasMore && venues.length > 0 && (
+              <div className="mt-7 flex justify-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={loadingMore}
+                  onClick={handleLoadMore}
+                  className="h-11 min-w-40 rounded-xl border-[#073b77] px-6 font-bold text-[#073b77] hover:bg-[#073b77] hover:text-white"
+                >
+                  {loadingMore && (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  )}
+                  {loadingMore ? "Đang tải..." : "Xem thêm sân"}
+                </Button>
+              </div>
+            )}
+
+            {loadMoreError && (
+              <p className="mt-3 text-center text-sm text-destructive">
+                {loadMoreError}
+              </p>
+            )}
+          </>
         )}
       </section>
     </main>

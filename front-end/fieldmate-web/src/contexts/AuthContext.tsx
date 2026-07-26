@@ -19,6 +19,7 @@ type AuthContextValue = {
   ready: boolean;
   signIn: (token: string) => Promise<void>;
   signOut: () => void;
+  syncUser: (user: UserResponse) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -93,6 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           path: "/",
         });
         setUser(null);
+      },
+      syncUser(updatedUser) {
+        setUser(updatedUser);
       },
     }),
     [ready, user],

@@ -16,6 +16,13 @@ export type RegisterRequest = {
   avatar?: File | null;
 };
 
+export type UpdateUserRequest = {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  avatar?: File | null;
+};
+
 export type UserRole = "CUSTOMER" | "COURT_OWNER" | "ADMIN";
 
 export type UserResponse = {

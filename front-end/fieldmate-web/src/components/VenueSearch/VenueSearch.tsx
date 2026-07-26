@@ -12,7 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { provinceService } from "@/services/province.service";
 import { sportTypeService } from "@/services/sport-type.service";
+import type { ProvinceResponse } from "@/types/province";
 import type { SportTypeResponse } from "@/types/sport-type";
 
 export type VenueSearchFilters = {
@@ -30,52 +32,25 @@ type ApiErrorResponse = {
   message?: string;
 };
 
-type LocationOption = {
-  value: string;
-  label: string;
-};
-
-const provinces: LocationOption[] = [
-  { value: "ho-chi-minh", label: "Thành phố Hồ Chí Minh" },
-  { value: "ha-noi", label: "Hà Nội" },
-  { value: "da-nang", label: "Đà Nẵng" },
-];
-
-const wardsByProvince: Record<string, LocationOption[]> = {
-  "ho-chi-minh": [
-    { value: "phuong-sai-gon", label: "Phường Sài Gòn" },
-    { value: "phuong-ben-thanh", label: "Phường Bến Thành" },
-    { value: "phuong-binh-thanh", label: "Phường Bình Thạnh" },
-    { value: "phuong-thu-duc", label: "Phường Thủ Đức" },
-  ],
-  "ha-noi": [
-    { value: "phuong-ba-dinh", label: "Phường Ba Đình" },
-    { value: "phuong-cau-giay", label: "Phường Cầu Giấy" },
-    { value: "phuong-dong-da", label: "Phường Đống Đa" },
-    { value: "phuong-nam-tu-liem", label: "Phường Nam Từ Liêm" },
-  ],
-  "da-nang": [
-    { value: "phuong-hai-chau", label: "Phường Hải Châu" },
-    { value: "phuong-son-tra", label: "Phường Sơn Trà" },
-    { value: "phuong-ngu-hanh-son", label: "Phường Ngũ Hành Sơn" },
-  ],
-};
-
 export function VenueSearch({
   searching,
   onSearch,
 }: VenueSearchProps) {
   const [sportTypeId, setSportTypeId] = useState("");
-  const [provinceId, setProvinceId] = useState("");
-  const [wardId, setWardId] = useState("");
+  const [provinceName, setProvinceName] = useState("");
+  const [wardName, setWardName] = useState("");
   const [sportTypes, setSportTypes] = useState<SportTypeResponse[]>([]);
+  const [provinces, setProvinces] = useState<ProvinceResponse[]>([]);
   const [loadingSports, setLoadingSports] = useState(true);
+  const [loadingLocations, setLoadingLocations] = useState(true);
   const [sportError, setSportError] = useState("");
+  const [locationError, setLocationError] = useState("");
 
-  const wards = useMemo(
-    () => wardsByProvince[provinceId] ?? [],
-    [provinceId],
+  const selectedProvince = useMemo(
+    () => provinces.find((province) => province.name === provinceName),
+    [provinceName, provinces],
   );
+  const wards = selectedProvince?.wards ?? [];
 
   useEffect(() => {
     let active = true;
@@ -117,21 +92,48 @@ export function VenueSearch({
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadLocations() {
+      try {
+        setLoadingLocations(true);
+        setLocationError("");
+
+        const data = await provinceService.getAllWithWards();
+
+        if (active) {
+          setProvinces(data);
+        }
+      } catch {
+        if (active) {
+          setLocationError("Không thể tải danh sách tỉnh, thành phố.");
+        }
+      } finally {
+        if (active) {
+          setLoadingLocations(false);
+        }
+      }
+    }
+
+    loadLocations();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const selectedSport = sportTypes.find(
       (sportType) => String(sportType.id) === sportTypeId,
     );
-    const selectedProvince = provinces.find(
-      (province) => province.value === provinceId,
-    );
-    const selectedWard = wards.find((ward) => ward.value === wardId);
 
     await onSearch({
       name: "",
       sportTypeId: selectedSport?.id,
-      address: selectedWard?.label ?? selectedProvince?.label,
+      address: wardName || provinceName || undefined,
     });
 
     document.getElementById("venue-list")?.scrollIntoView({
@@ -182,7 +184,7 @@ export function VenueSearch({
           </SelectTrigger>
           <SelectContent align="start">
             {sportTypes.map((sportType) => (
-              <SelectItem key={sportType.id} value={String(sportType.name)}>
+              <SelectItem key={sportType.id} value={String(sportType.id)}>
                 {sportType.name}
               </SelectItem>
             ))}
@@ -190,32 +192,39 @@ export function VenueSearch({
         </Select>
 
         <Select
-          value={provinceId}
+          value={provinceName}
           onValueChange={(value) => {
-            setProvinceId(value ?? "");
-            setWardId("");
+            setProvinceName(value ?? "");
+            setWardName("");
           }}
+          disabled={loadingLocations || Boolean(locationError)}
         >
           <SelectTrigger className="h-[50px] min-h-[50px] w-full items-center justify-start gap-3 rounded-xl border-slate-200 bg-white px-4 text-sm shadow-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-0 sm:text-base">
             <Building2 className="size-5 shrink-0 text-slate-700" />
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-slate-200" />
             <div className="flex-1 truncate text-left">
-              <SelectValue placeholder="Chọn tỉnh/thành phố" />
+              <SelectValue
+                placeholder={
+                  loadingLocations
+                    ? "Đang tải tỉnh/thành phố..."
+                    : locationError || "Chọn tỉnh/thành phố"
+                }
+              />
             </div>
           </SelectTrigger>
           <SelectContent align="start">
             {provinces.map((province) => (
-              <SelectItem key={province.value} value={province.value}>
-                {province.label}
+              <SelectItem key={province.name} value={province.name}>
+                {province.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select
-          value={wardId}
-          onValueChange={(value) => setWardId(value ?? "")}
-          disabled={!provinceId}
+          value={wardName}
+          onValueChange={(value) => setWardName(value ?? "")}
+          disabled={!provinceName || loadingLocations}
         >
           <SelectTrigger className="h-[50px] min-h-[50px] w-full items-center justify-start gap-3 rounded-xl border-slate-200 bg-white px-4 text-sm shadow-sm focus:ring-2 focus:ring-slate-400 focus:ring-offset-0 sm:text-base">
             <MapPin className="size-5 shrink-0 text-slate-700" />
@@ -223,7 +232,7 @@ export function VenueSearch({
             <div className="flex-1 truncate text-left">
               <SelectValue
                 placeholder={
-                  provinceId
+                  provinceName
                     ? "Chọn phường/xã"
                     : "Chọn tỉnh/thành phố trước"
                 }
@@ -232,8 +241,8 @@ export function VenueSearch({
           </SelectTrigger>
           <SelectContent align="start">
             {wards.map((ward) => (
-              <SelectItem key={ward.value} value={ward.value}>
-                {ward.label}
+              <SelectItem key={ward.name} value={ward.name}>
+                {ward.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -250,6 +259,9 @@ export function VenueSearch({
 
       {sportError && (
         <p className="mt-3 text-sm text-destructive">{sportError}</p>
+      )}
+      {locationError && (
+        <p className="mt-3 text-sm text-destructive">{locationError}</p>
       )}
     </section>
   );

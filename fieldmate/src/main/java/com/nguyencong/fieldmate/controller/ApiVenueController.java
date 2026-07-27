@@ -75,4 +75,10 @@ public class ApiVenueController {
         return new ResponseEntity<>(this.venueService.getPendingVenues(), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('COURT_OWNER')")
+    @GetMapping("/secure/venues/me")
+    public ResponseEntity<Page<VenueResponse.Summary>> getMyVenues(@RequestParam(defaultValue = "0") int page) {
+        return ResponseEntity.ok(venueService.getMyVenues(page));
+    }
+
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Building2,
   CalendarDays,
   ChevronDown,
   House,
@@ -39,10 +40,18 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navigation = [
+const publicNavigation = [
   { label: "Trang chủ", href: "/", icon: House },
   { label: "Sân tập", href: "/venues", icon: MapPin },
   { label: "Lịch đặt", href: "/bookings", icon: CalendarDays },
+];
+
+const courtOwnerNavigation = [
+  {
+    label: "Quản lý sân tập",
+    href: "/my-venues",
+    icon: Building2,
+  },
 ];
 
 function Brand() {
@@ -76,6 +85,11 @@ export function Header() {
     router.push("/profile");
   }
 
+  const navigation =
+    user?.role === "COURT_OWNER"
+      ? courtOwnerNavigation
+      : publicNavigation;
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 shadow-[0_4px_24px_rgba(15,23,42,0.04)] backdrop-blur-md">
       <div className="mx-auto flex h-20 w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -84,7 +98,7 @@ export function Header() {
         </Link>
 
         <nav
-          className="hidden items-center gap-1 lg:flex"
+          className="ml-8 mr-auto hidden items-center gap-1 lg:flex"
           aria-label="Điều hướng chính"
         >
           {navigation.map((item) => (

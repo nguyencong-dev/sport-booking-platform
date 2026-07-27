@@ -166,4 +166,15 @@ public class VenueServiceImpl implements VenueService {
         return venueRepository.findByStatus(StatusVenue.PENDING).stream().map(VenueMapper::toSummary).toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<VenueResponse.Summary> getMyVenues(int page) {
+        User currentUser = currentUserProvider.getCurrentUser();
+        Pageable pageable = PaginationUtils.createPageable(page);
+
+        return venueRepository
+                .findByOwnerId(currentUser.getId(), pageable)
+                .map(VenueMapper::toSummary);
+    }
+
 }

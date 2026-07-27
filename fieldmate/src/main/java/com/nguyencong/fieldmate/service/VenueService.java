@@ -24,4 +24,6 @@ public interface VenueService {
     VenueResponse.Summary updateVenueStatus(Long id, StatusVenue status);
 
     List<VenueResponse.Summary> getPendingVenues();
+
+    Page<VenueResponse.Summary> getMyVenues(int page);
 }

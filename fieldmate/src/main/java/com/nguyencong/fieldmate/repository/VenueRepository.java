@@ -39,4 +39,6 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
       """)
   Page<Venue> findByFilters(@Param("name") String name, @Param("address") String address,
       @Param("sportTypeId") Long sportTypeId, @Param("status") StatusVenue status, Pageable pageable);
+
+  Page<Venue> findByOwnerId(Long ownerId, Pageable pageable);
 }

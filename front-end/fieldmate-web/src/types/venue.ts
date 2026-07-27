@@ -24,3 +24,12 @@ export type VenueDetailResponse = VenueSummaryResponse & {
   createdAt: string;
   updatedAt: string;
 };
+
+export type VenueUpsertRequest = {
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  banner?: File | null;
+  logo?: File | null;
+};

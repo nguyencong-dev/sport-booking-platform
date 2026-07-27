@@ -25,7 +25,7 @@ import type { AuthErrorResponse } from "@/types/auth";
 
 export function LoginScreen() {
   const router = useRouter();
-  const { isAuthenticated, ready, signIn } = useAuth();
+  const { user, isAuthenticated, ready, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,9 +34,11 @@ export function LoginScreen() {
 
   useEffect(() => {
     if (ready && isAuthenticated) {
-      router.replace("/");
+      router.replace(
+        user?.role === "COURT_OWNER" ? "/my-venues" : "/",
+      );
     }
-  }, [isAuthenticated, ready, router]);
+  }, [isAuthenticated, ready, router, user]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,8 +52,10 @@ export function LoginScreen() {
         password,
       });
 
-      await signIn(response.token);
-      router.replace("/");
+      const currentUser = await signIn(response.token);
+      router.replace(
+        currentUser.role === "COURT_OWNER" ? "/my-venues" : "/",
+      );
       router.refresh();
     } catch (requestError) {
       if (axios.isAxiosError<AuthErrorResponse>(requestError)) {

@@ -305,7 +305,7 @@ export function VenueFormScreen({
           if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
             setError(
               requestError.response?.data?.message ??
-                "Không thể tải thông tin sân.",
+              "Không thể tải thông tin sân.",
             );
           } else {
             setError("Không thể tải thông tin sân.");
@@ -553,8 +553,8 @@ export function VenueFormScreen({
       parsedSportTypeId: /^\d+$/.test(court.sportTypeId)
         ? Number(court.sportTypeId)
         : sportTypes.find(
-            (sportType) => sportType.name === court.sportTypeId,
-          )?.id ?? 0,
+          (sportType) => sportType.name === court.sportTypeId,
+        )?.id ?? 0,
     }));
     const invalidCourt = normalizedCourts.find(
       (court) =>
@@ -692,8 +692,8 @@ export function VenueFormScreen({
 
         setError(
           firstFieldError ??
-            requestError.response?.data?.message ??
-            "Không thể lưu thông tin sân.",
+          requestError.response?.data?.message ??
+          "Không thể lưu thông tin sân.",
         );
       } else {
         setError("Không thể lưu thông tin sân.");
@@ -984,12 +984,12 @@ export function VenueFormScreen({
                           /^\d+$/.test(court.sportTypeId)
                             ? court.sportTypeId
                             : String(
-                                sportTypes.find(
-                                  (sportType) =>
-                                    sportType.name ===
-                                    court.sportTypeId,
-                                )?.id ?? "",
-                              )
+                              sportTypes.find(
+                                (sportType) =>
+                                  sportType.name ===
+                                  court.sportTypeId,
+                              )?.id ?? "",
+                            )
                         }
                         disabled={submitting}
                         onChange={(event) =>
@@ -1168,45 +1168,45 @@ export function VenueFormScreen({
 
                 {(existingVenueImages.length > 0 ||
                   venueImages.length > 0) && (
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {existingVenueImages.map((image, index) => (
-                      <div
-                        key={image.id ?? image.url}
-                        className="relative overflow-hidden rounded-2xl border border-slate-200"
-                      >
-                        <img
-                          src={image.url}
-                          alt={`Ảnh sân hiện tại ${index + 1}`}
-                          className="aspect-[4/3] w-full object-cover"
-                        />
-                        {image.id !== undefined && (
-                          <Button
-                            type="button"
-                            size="icon"
-                            disabled={submitting}
-                            onClick={() =>
-                              removeExistingVenueImage(image.id!)
-                            }
-                            className="absolute right-2 top-2 size-9 rounded-full bg-red-600 text-white hover:bg-red-700"
-                            aria-label={`Xóa ảnh sân hiện tại ${index + 1}`}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {existingVenueImages.map((image, index) => (
+                        <div
+                          key={image.id ?? image.url}
+                          className="relative overflow-hidden rounded-2xl border border-slate-200"
+                        >
+                          <img
+                            src={image.url}
+                            alt={`Ảnh sân hiện tại ${index + 1}`}
+                            className="aspect-[4/3] w-full object-cover"
+                          />
+                          {image.id !== undefined && (
+                            <Button
+                              type="button"
+                              size="icon"
+                              disabled={submitting}
+                              onClick={() =>
+                                removeExistingVenueImage(image.id!)
+                              }
+                              className="absolute right-2 top-2 size-9 rounded-full bg-red-600 text-white hover:bg-red-700"
+                              aria-label={`Xóa ảnh sân hiện tại ${index + 1}`}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
 
-                    {venueImages.map((image, index) => (
-                      <SelectedVenueImage
-                        key={image.clientId}
-                        image={image}
-                        index={index}
-                        disabled={submitting}
-                        onRemove={removeVenueImage}
-                      />
-                    ))}
-                  </div>
-                )}
+                      {venueImages.map((image, index) => (
+                        <SelectedVenueImage
+                          key={image.clientId}
+                          image={image}
+                          index={index}
+                          disabled={submitting}
+                          onRemove={removeVenueImage}
+                        />
+                      ))}
+                    </div>
+                  )}
               </section>
 
               {error && (

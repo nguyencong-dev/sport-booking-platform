@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarDays,
   ChevronDown,
+  CreditCard,
   House,
   LogOut,
   MapPin,
@@ -51,6 +52,11 @@ const courtOwnerNavigation = [
     label: "Quản lý sân tập",
     href: "/my-venues",
     icon: Building2,
+  },
+  {
+    label: "Tài khoản nhận tiền",
+    href: "/payment-accounts",
+    icon: CreditCard,
   },
 ];
 

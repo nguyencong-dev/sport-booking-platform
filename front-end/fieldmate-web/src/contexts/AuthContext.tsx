@@ -17,7 +17,7 @@ type AuthContextValue = {
   user: UserResponse | null;
   isAuthenticated: boolean;
   ready: boolean;
-  signIn: (token: string) => Promise<void>;
+  signIn: (token: string) => Promise<UserResponse>;
   signOut: () => void;
   syncUser: (user: UserResponse) => void;
 };
@@ -81,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const currentUser = await userService.getCurrentUser();
           setUser(currentUser);
+          return currentUser;
         } catch (error) {
           cookies.remove("token", {
             path: "/",

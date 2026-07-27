@@ -278,7 +278,7 @@ export function BookingScreen({
         </h1>
 
         <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
-          <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100">
+          <Card className="order-last rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 2xl:order-first">
             <CardHeader className="px-6 pt-7 sm:px-8">
               <CardTitle className="text-xl font-black text-[#073b77]">
                 Chọn lịch đặt
@@ -438,7 +438,7 @@ export function BookingScreen({
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 lg:sticky lg:top-24">
+          <Card className="order-first rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 2xl:order-last 2xl:sticky 2xl:top-24">
             {venue.banner && (
               <div className="aspect-[16/9] overflow-hidden rounded-t-3xl bg-slate-100">
                 <img

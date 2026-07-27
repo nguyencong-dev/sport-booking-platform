@@ -1,5 +1,6 @@
 import { fieldmateClient } from "@/services/clients/fieldmate-client";
 import type { PageResponse } from "@/types/pagination";
+import type { VenueBookingScheduleResponse } from "@/types/booking";
 import type {
   VenueDetailResponse,
   VenueStatus,
@@ -64,6 +65,20 @@ export const venueService = {
     const response = await fieldmateClient.get<VenueDetailResponse>(
       `/venues/${venueId}`,
     );
+
+    return response.data;
+  },
+
+  async getBookingSchedule(venueId: number, date: string) {
+    const response =
+      await fieldmateClient.get<VenueBookingScheduleResponse>(
+        `/venues/${venueId}/booking-schedule`,
+        {
+          params: {
+            date,
+          },
+        },
+      );
 
     return response.data;
   },

@@ -30,3 +30,21 @@ export type BookingResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type BookedPeriodResponse = {
+  bookingId: number;
+  startTime: string;
+  endTime: string;
+};
+
+export type CourtBookingScheduleResponse = {
+  courtId: number;
+  courtName: string;
+  bookedPeriods: BookedPeriodResponse[];
+};
+
+export type VenueBookingScheduleResponse = {
+  venueId: number;
+  date: string;
+  courts: CourtBookingScheduleResponse[];
+};

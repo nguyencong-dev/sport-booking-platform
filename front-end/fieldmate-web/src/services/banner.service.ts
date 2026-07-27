@@ -8,4 +8,8 @@ export const bannerService = {
 
     return response.data;
   },
+
+  async remove(bannerId: number) {
+    await fieldmateClient.delete(`/secure/banners/${bannerId}`);
+  },
 };

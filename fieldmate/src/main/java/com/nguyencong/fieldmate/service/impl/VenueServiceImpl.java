@@ -1,8 +1,11 @@
 package com.nguyencong.fieldmate.service.impl;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,12 +18,20 @@ import com.cloudinary.Cloudinary;
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
 import com.nguyencong.fieldmate.dto.response.VenueResponse.Summary;
+import com.nguyencong.fieldmate.dto.response.VenueBookingScheduleResponse;
+import com.nguyencong.fieldmate.entity.Booking;
+import com.nguyencong.fieldmate.entity.Court;
 import com.nguyencong.fieldmate.entity.User;
 import com.nguyencong.fieldmate.entity.Venue;
+import com.nguyencong.fieldmate.entity.enums.BookingStatus;
+import com.nguyencong.fieldmate.entity.enums.CourtStatus;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
 import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.VenueMapper;
+import com.nguyencong.fieldmate.mapper.VenueBookingScheduleMapper;
+import com.nguyencong.fieldmate.repository.BookingRepository;
+import com.nguyencong.fieldmate.repository.CourtRepository;
 import com.nguyencong.fieldmate.repository.VenueRepository;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.VenueService;
@@ -31,6 +42,12 @@ public class VenueServiceImpl implements VenueService {
 
     @Autowired
     private VenueRepository venueRepository;
+
+    @Autowired
+    private CourtRepository courtRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private Cloudinary cloudinary;
@@ -175,6 +192,22 @@ public class VenueServiceImpl implements VenueService {
         return venueRepository
                 .findByOwnerId(currentUser.getId(), pageable)
                 .map(VenueMapper::toSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VenueBookingScheduleResponse getBookingSchedule(Long venueId, LocalDate date) {
+        Venue venue = findVenue(venueId);
+
+        List<Court> courts = courtRepository.findByVenueId(venueId).stream()
+                .filter(court -> court.getStatus() == CourtStatus.ACTIVE).toList();
+
+        Map<Long, List<Booking>> bookingsByCourtId = bookingRepository
+                .findBookedPeriodsByVenueIdAndDate(venueId, date,
+                        Set.of(BookingStatus.PENDING, BookingStatus.CONFIRMED))
+                .stream().collect(Collectors.groupingBy(booking -> booking.getCourt().getId()));
+
+        return VenueBookingScheduleMapper.toResponse(venue, date, courts, bookingsByCourtId);
     }
 
 }

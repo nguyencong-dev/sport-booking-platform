@@ -1,6 +1,7 @@
 package com.nguyencong.fieldmate.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
+import com.nguyencong.fieldmate.dto.response.VenueBookingScheduleResponse;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 import com.nguyencong.fieldmate.service.VenueService;
 
@@ -39,6 +42,13 @@ public class ApiVenueController {
     @GetMapping("/venues/{id}")
     public ResponseEntity<VenueResponse.Detail> getVenueById(@PathVariable Long id) {
         return new ResponseEntity<>(this.venueService.getVenueById(id), HttpStatus.OK);
+    }
+
+    @GetMapping("/venues/{id}/booking-schedule")
+    public ResponseEntity<VenueBookingScheduleResponse> getBookingSchedule(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(venueService.getBookingSchedule(id, date));
     }
 
     @PreAuthorize("hasRole('COURT_OWNER')")

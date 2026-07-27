@@ -30,6 +30,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  BookingSchedulePicker,
+  type BookingScheduleSelection,
+} from "@/components/BookingSchedule/BookingSchedulePicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookingDraftService } from "@/services/booking-draft.service";
 import { courtService } from "@/services/court.service";
@@ -183,6 +187,23 @@ export function BookingScreen({
 
   const estimatedDeposit = estimatedTotal * 0.3;
 
+  function handleScheduleSelection(
+    selection: BookingScheduleSelection | null,
+  ) {
+    if (!selection) {
+      setBookingDate("");
+      setStartTime("");
+      setEndTime("");
+      return;
+    }
+
+    setCourtId(String(selection.courtId));
+    setBookingDate(selection.bookingDate);
+    setStartTime(selection.startTime);
+    setEndTime(selection.endTime);
+    setError("");
+  }
+
   function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
@@ -251,12 +272,12 @@ export function BookingScreen({
 
   return (
     <main className="flex-1 bg-[#f6f8fb] px-4 py-10 sm:px-6 lg:py-14">
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-[1500px]">
         <h1 className="mb-8 text-3xl font-black tracking-[-0.04em] text-[#073b77] sm:text-4xl">
           Đặt sân
         </h1>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
           <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100">
             <CardHeader className="px-6 pt-7 sm:px-8">
               <CardTitle className="text-xl font-black text-[#073b77]">
@@ -269,6 +290,15 @@ export function BookingScreen({
                 onSubmit={handleSubmit}
                 className="space-y-6"
               >
+                <BookingSchedulePicker
+                  venueId={venueId}
+                  onCourtChange={(selectedCourtId) =>
+                    setCourtId(String(selectedCourtId))
+                  }
+                  onSelectionChange={handleScheduleSelection}
+                />
+
+                <div className="hidden">
                 <div>
                   <label
                     htmlFor="court"
@@ -381,6 +411,7 @@ export function BookingScreen({
                       />
                     </div>
                   </div>
+                </div>
                 </div>
 
                 {error && (

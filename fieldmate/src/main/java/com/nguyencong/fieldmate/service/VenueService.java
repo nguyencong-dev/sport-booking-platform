@@ -1,12 +1,14 @@
 package com.nguyencong.fieldmate.service;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
+import com.nguyencong.fieldmate.dto.response.VenueBookingScheduleResponse;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
 public interface VenueService {
@@ -26,4 +28,6 @@ public interface VenueService {
     List<VenueResponse.Summary> getPendingVenues();
 
     Page<VenueResponse.Summary> getMyVenues(int page);
+
+    VenueBookingScheduleResponse getBookingSchedule(Long venueId, LocalDate date);
 }

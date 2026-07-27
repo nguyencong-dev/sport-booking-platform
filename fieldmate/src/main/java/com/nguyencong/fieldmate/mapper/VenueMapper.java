@@ -2,6 +2,7 @@ package com.nguyencong.fieldmate.mapper;
 
 import com.nguyencong.fieldmate.dto.request.VenueRequest;
 import com.nguyencong.fieldmate.dto.response.VenueResponse;
+import com.nguyencong.fieldmate.dto.response.VenueImageResponse;
 import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
@@ -45,15 +46,18 @@ public class VenueMapper {
                                 .ownerName(getOwnerName(venue))
                                 .benefits(venue.getBenefits()
                                                 .stream()
-                                                .map(benefit -> benefit.getName())
+                                                .map(BenefitMapper::toResponse)
                                                 .toList())
                                 .rules(venue.getRules()
                                                 .stream()
-                                                .map(rule -> rule.getName())
+                                                .map(RuleMapper::toResponse)
                                                 .toList())
                                 .images(venue.getImages()
                                                 .stream()
-                                                .map(image -> image.getUrl())
+                                                .map(image -> VenueImageResponse.builder()
+                                                                .id(image.getId())
+                                                                .url(image.getUrl())
+                                                                .build())
                                                 .toList())
                                 .createdAt(venue.getCreatedAt())
                                 .updatedAt(venue.getUpdatedAt())

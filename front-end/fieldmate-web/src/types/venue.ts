@@ -1,3 +1,7 @@
+import type { BenefitResponse } from "@/types/benefit";
+import type { RuleResponse } from "@/types/rule";
+import type { VenueImageResponse } from "@/types/venue-image";
+
 export type VenueStatus =
   | "PENDING"
   | "ACTIVE"
@@ -18,9 +22,9 @@ export type VenueSummaryResponse = {
 export type VenueDetailResponse = VenueSummaryResponse & {
   ownerId: number;
   ownerName: string;
-  benefits: string[];
-  rules: string[];
-  images: string[];
+  benefits: BenefitResponse[];
+  rules: RuleResponse[];
+  images: VenueImageResponse[];
   createdAt: string;
   updatedAt: string;
 };

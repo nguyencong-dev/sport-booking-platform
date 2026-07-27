@@ -127,7 +127,10 @@ export function VenueDetailScreen({
     }
 
     return Array.from(
-      new Set([venue.banner, ...(venue.images ?? [])].filter(Boolean)),
+      new Set(
+        [venue.banner, ...(venue.images ?? []).map((image) => image.url)]
+          .filter(Boolean),
+      ),
     ) as string[];
   }, [venue]);
 
@@ -154,7 +157,7 @@ export function VenueDetailScreen({
           setVenue(venueData);
           setCourts(courtData);
           setSelectedImage(
-            venueData.banner ?? venueData.images?.[0] ?? "",
+            venueData.banner ?? venueData.images?.[0]?.url ?? "",
           );
         }
       } catch (requestError) {
@@ -402,11 +405,11 @@ export function VenueDetailScreen({
                       <ul className="space-y-3">
                         {venue.benefits.map((benefit) => (
                           <li
-                            key={benefit}
+                            key={benefit.id}
                             className="flex items-start gap-2 text-sm text-slate-600"
                           >
                             <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-                            {benefit}
+                            {benefit.name}
                           </li>
                         ))}
                       </ul>
@@ -430,13 +433,13 @@ export function VenueDetailScreen({
                       <ol className="space-y-3">
                         {venue.rules.map((rule, index) => (
                           <li
-                            key={`${index}-${rule}`}
+                            key={rule.id}
                             className="flex items-start gap-3 text-sm text-slate-600"
                           >
                             <span className="grid size-5 shrink-0 place-items-center rounded-full bg-rose-50 text-xs font-bold text-[#ff174f]">
                               {index + 1}
                             </span>
-                            {rule}
+                            {rule.name}
                           </li>
                         ))}
                       </ol>

@@ -41,9 +41,9 @@ public class VenueResponse {
         private StatusVenue status;
         private Long ownerId;
         private String ownerName;
-        private List<String> benefits;
-        private List<String> rules;
-        private List<String> images;
+        private List<BenefitResponse> benefits;
+        private List<RuleResponse> rules;
+        private List<VenueImageResponse> images;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
     }

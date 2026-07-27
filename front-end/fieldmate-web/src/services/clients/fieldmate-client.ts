@@ -12,7 +12,6 @@ export const fieldmateClient = axios.create({
   timeout: API_CONFIG.timeout,
   headers: {
     Accept: "application/json",
-    "Content-Type": "application/json",
   },
 });
 

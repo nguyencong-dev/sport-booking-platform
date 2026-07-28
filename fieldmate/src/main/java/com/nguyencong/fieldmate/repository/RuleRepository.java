@@ -10,12 +10,7 @@ public interface RuleRepository extends JpaRepository<Rule, Long> {
 
     List<Rule> findByVenueIdOrderByIdAsc(Long venueId);
 
-    boolean existsByVenueIdAndNameIgnoreCase(
-            Long venueId,
-            String name);
+    boolean existsByVenueIdAndNameIgnoreCase(Long venueId, String name);
 
-    boolean existsByVenueIdAndNameIgnoreCaseAndIdNot(
-            Long venueId,
-            String name,
-            Long id);
+    boolean existsByVenueIdAndNameIgnoreCaseAndIdNot(Long venueId, String name, Long id);
 }

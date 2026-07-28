@@ -29,4 +29,20 @@ export const bookingService = {
 
     return response.data;
   },
+
+  async getByVenueId(venueId: number): Promise<BookingResponse[]> {
+    const response = await fieldmateClient.get<BookingResponse[]>(
+      `/secure/venues/${venueId}/bookings`,
+    );
+
+    return response.data;
+  },
+
+  async complete(bookingId: number): Promise<BookingResponse> {
+    const response = await fieldmateClient.patch<BookingResponse>(
+      `/secure/bookings/${bookingId}/complete`,
+    );
+
+    return response.data;
+  },
 };

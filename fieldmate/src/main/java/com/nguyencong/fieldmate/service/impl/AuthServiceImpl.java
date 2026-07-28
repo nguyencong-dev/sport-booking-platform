@@ -38,8 +38,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponse registerUser(RegisterRequest request) throws IOException {
         if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateResourceException(
-                    "Email đã được sử dụng");
+            throw new DuplicateResourceException("Email đã được sử dụng");
         }
 
         User user = new User();
@@ -50,8 +49,7 @@ public class AuthServiceImpl implements AuthService {
         user.setLastName(request.getLastName());
 
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    request.getAvatar().getBytes(),
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getAvatar().getBytes(),
                     Map.of("folder", "fieldmate/avatars"));
 
             user.setAvatar((String) uploadResult.get("secure_url"));
@@ -63,11 +61,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy người dùng"));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy người dùng"));
         String token = JwtTokenProvider.generateToken(user.getEmail());
         return new AuthResponse(token);
     }

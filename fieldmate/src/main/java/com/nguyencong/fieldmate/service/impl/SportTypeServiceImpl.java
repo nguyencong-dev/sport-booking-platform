@@ -22,10 +22,7 @@ public class SportTypeServiceImpl implements SportTypeService {
 
     @Override
     public List<SportTypeResponse> getAllSportTypes() {
-        return sportTypeRepository.findAll()
-                .stream()
-                .map(SportTypeMapper::toResponse)
-                .toList();
+        return sportTypeRepository.findAll().stream().map(SportTypeMapper::toResponse).toList();
     }
 
     @Override

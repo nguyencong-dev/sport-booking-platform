@@ -38,9 +38,7 @@ public class VenueImageServiceImpl implements VenueImageService {
 
     @Override
     @Transactional
-    public List<VenueImageResponse> uploadVenueImages(
-            Long venueId,
-            List<MultipartFile> images) throws IOException {
+    public List<VenueImageResponse> uploadVenueImages(Long venueId, List<MultipartFile> images) throws IOException {
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
 
@@ -61,8 +59,7 @@ public class VenueImageServiceImpl implements VenueImageService {
                 continue;
             }
 
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    image.getBytes(),
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(image.getBytes(),
                     Map.of("folder", "fieldmate/venues/images"));
 
             Object secureUrl = uploadResult.get("secure_url");
@@ -79,9 +76,7 @@ public class VenueImageServiceImpl implements VenueImageService {
             throw new BadRequestException("Không có ảnh hợp lệ để tải lên");
         }
 
-        return uploadedImages.stream()
-                .map(VenueImageMapper::toResponse)
-                .toList();
+        return uploadedImages.stream().map(VenueImageMapper::toResponse).toList();
     }
 
     @Override

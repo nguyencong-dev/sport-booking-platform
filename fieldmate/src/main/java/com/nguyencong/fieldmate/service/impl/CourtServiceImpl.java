@@ -40,10 +40,7 @@ public class CourtServiceImpl implements CourtService {
             throw new ResourceNotFoundException("Không tìm thấy cụm sân");
         }
 
-        return courtRepository.findByVenueId(venueId)
-                .stream()
-                .map(CourtMapper::toResponse)
-                .toList();
+        return courtRepository.findByVenueId(venueId).stream().map(CourtMapper::toResponse).toList();
     }
 
     @Override

@@ -6,8 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.nguyencong.fieldmate.entity.HeroBanner;
 
-public interface HeroBannerRepository
-        extends JpaRepository<HeroBanner, Long> {
+public interface HeroBannerRepository extends JpaRepository<HeroBanner, Long> {
 
     List<HeroBanner> findAllByOrderByIdDesc();
 }

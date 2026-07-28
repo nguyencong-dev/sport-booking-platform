@@ -272,8 +272,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public void handleMomoIpn(MomoIpnRequest request) {
 
-        Payment payment = paymentRepository
-                .findByTransactionCode(request.getOrderId())
+        Payment payment = paymentRepository.findByTransactionCode(request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giao dịch"));
 
         if (payment.getPaymentMethod() != PaymentMethod.MOMO) {
@@ -282,17 +281,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         OwnerPaymentAccount paymentAccount = payment.getPaymentAccount();
 
-        if (paymentAccount == null
-                || paymentAccount.getProvider() != PaymentProvider.MOMO) {
+        if (paymentAccount == null || paymentAccount.getProvider() != PaymentProvider.MOMO) {
             throw new BadRequestException("Giao dịch không có tài khoản MoMo hợp lệ");
         }
 
-        MomoCredential credential = momoCredentialRepository
-                .findByPaymentAccount_Id(paymentAccount.getId())
+        MomoCredential credential = momoCredentialRepository.findByPaymentAccount_Id(paymentAccount.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin MoMo của chủ sân"));
 
-        if (!credential.getPartnerCode()
-                .equals(request.getPartnerCode())) {
+        if (!credential.getPartnerCode().trim().equals(request.getPartnerCode())) {
             throw new BadRequestException("Partner code MoMo không hợp lệ");
         }
 
@@ -381,7 +377,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             String tmnCode = parameters.get("vnp_TmnCode");
 
-            if (!credential.getTmnCode().equals(tmnCode)) {
+            if (!credential.getTmnCode().trim().equals(tmnCode)) {
                 return new VnPayIpnResponse("97", "Invalid signature");
             }
 
@@ -446,7 +442,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .orElse(null);
 
             if (credential != null
-                    && credential.getTmnCode().equals(parameters.get("vnp_TmnCode"))) {
+                    && credential.getTmnCode().trim().equals(parameters.get("vnp_TmnCode"))) {
                 try {
                     String hashSecret = credentialEncryptionService.decrypt(credential.getHashSecret());
                     signatureValid = VnPayUtils.hasValidSignature(parameters, hashSecret);

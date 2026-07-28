@@ -29,11 +29,7 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     @Override
     @Transactional(readOnly = true)
     public List<HeroBannerResponse> getAllHeroBanners() {
-        return heroBannerRepository
-                .findAllByOrderByIdDesc()
-                .stream()
-                .map(HeroBannerMapper::toResponse)
-                .toList();
+        return heroBannerRepository.findAllByOrderByIdDesc().stream().map(HeroBannerMapper::toResponse).toList();
     }
 
     @Override
@@ -41,16 +37,12 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     public HeroBannerResponse createHeroBanner(
             HeroBannerRequest.Create request) throws IOException {
 
-        if (request.getImage() == null
-                || request.getImage().isEmpty()) {
+        if (request.getImage() == null || request.getImage().isEmpty()) {
             throw new BadRequestException("Ảnh banner không được để trống");
         }
 
-        Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                request.getImage().getBytes(),
-                Map.of(
-                        "folder",
-                        "fieldmate/hero-banners"));
+        Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getImage().getBytes(),
+                Map.of("folder", "fieldmate/hero-banners"));
 
         Object secureUrl = uploadResult.get("secure_url");
 
@@ -69,23 +61,17 @@ public class HeroBannerServiceImpl implements HeroBannerService {
 
     @Override
     @Transactional
-    public HeroBannerResponse updateHeroBanner(
-            Long id,
-            HeroBannerRequest.Update request) throws IOException {
+    public HeroBannerResponse updateHeroBanner(Long id, HeroBannerRequest.Update request) throws IOException {
 
         HeroBanner heroBanner = heroBannerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hero banner"));
 
         HeroBannerMapper.updateEntity(heroBanner, request);
 
-        if (request.getImage() != null
-                && !request.getImage().isEmpty()) {
+        if (request.getImage() != null && !request.getImage().isEmpty()) {
 
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    request.getImage().getBytes(),
-                    Map.of(
-                            "folder",
-                            "fieldmate/hero-banners"));
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getImage().getBytes(),
+                    Map.of("folder", "fieldmate/hero-banners"));
 
             Object secureUrl = uploadResult.get("secure_url");
 

@@ -41,7 +41,9 @@ import { ruleService } from "@/services/rule.service";
 import { sportTypeService } from "@/services/sport-type.service";
 import { venueImageService } from "@/services/venue-image.service";
 import { venueService } from "@/services/venue.service";
+import type { BenefitResponse } from "@/types/benefit";
 import type { ProvinceResponse } from "@/types/province";
+import type { RuleResponse } from "@/types/rule";
 import type { SportTypeResponse } from "@/types/sport-type";
 
 type VenueFormMode = "create" | "edit";
@@ -110,9 +112,15 @@ export function VenueFormScreen({
   const [courts, setCourts] = useState<CourtFormItem[]>([]);
   const [deletedCourtIds, setDeletedCourtIds] = useState<number[]>([]);
   const [rules, setRules] = useState<RuleFormItem[]>([]);
-  const [existingRules, setExistingRules] = useState<string[]>([]);
+  const [existingRules, setExistingRules] = useState<RuleResponse[]>([]);
+  const [updatedRuleIds, setUpdatedRuleIds] = useState<number[]>([]);
+  const [deletedRuleIds, setDeletedRuleIds] = useState<number[]>([]);
   const [benefits, setBenefits] = useState<BenefitFormItem[]>([]);
-  const [existingBenefits, setExistingBenefits] = useState<string[]>([]);
+  const [existingBenefits, setExistingBenefits] = useState<
+    BenefitResponse[]
+  >([]);
+  const [updatedBenefitIds, setUpdatedBenefitIds] = useState<number[]>([]);
+  const [deletedBenefitIds, setDeletedBenefitIds] = useState<number[]>([]);
   const [venueImages, setVenueImages] = useState<VenueImageFormItem[]>([]);
   const venueImageUrlsRef = useRef(new Set<string>());
   const [existingVenueImages, setExistingVenueImages] = useState<
@@ -288,8 +296,12 @@ export function VenueFormScreen({
         );
         setCurrentBanner(venue.banner ?? "");
         setCurrentLogo(venue.logo ?? "");
-        setExistingRules(venue.rules.map((rule) => rule.name));
-        setExistingBenefits(venue.benefits.map((benefit) => benefit.name));
+        setExistingRules(venue.rules);
+        setExistingBenefits(venue.benefits);
+        setUpdatedRuleIds([]);
+        setUpdatedBenefitIds([]);
+        setDeletedRuleIds([]);
+        setDeletedBenefitIds([]);
         setExistingVenueImages(venue.images);
         setCourts(
           venueCourts.map((court) => ({
@@ -415,6 +427,27 @@ export function VenueFormScreen({
     );
   }
 
+  function removeExistingRule(ruleId: number) {
+    setExistingRules((current) =>
+      current.filter((rule) => rule.id !== ruleId),
+    );
+    setUpdatedRuleIds((current) =>
+      current.filter((currentRuleId) => currentRuleId !== ruleId),
+    );
+    setDeletedRuleIds((current) => [...current, ruleId]);
+  }
+
+  function updateExistingRuleName(ruleId: number, value: string) {
+    setExistingRules((current) =>
+      current.map((rule) =>
+        rule.id === ruleId ? { ...rule, name: value } : rule,
+      ),
+    );
+    setUpdatedRuleIds((current) =>
+      current.includes(ruleId) ? current : [...current, ruleId],
+    );
+  }
+
   function addBenefit() {
     setBenefits((current) => [
       ...current,
@@ -438,6 +471,36 @@ export function VenueFormScreen({
   function removeBenefit(clientId: string) {
     setBenefits((current) =>
       current.filter((benefit) => benefit.clientId !== clientId),
+    );
+  }
+
+  function removeExistingBenefit(benefitId: number) {
+    setExistingBenefits((current) =>
+      current.filter((benefit) => benefit.id !== benefitId),
+    );
+    setUpdatedBenefitIds((current) =>
+      current.filter(
+        (currentBenefitId) => currentBenefitId !== benefitId,
+      ),
+    );
+    setDeletedBenefitIds((current) => [...current, benefitId]);
+  }
+
+  function updateExistingBenefitName(
+    benefitId: number,
+    value: string,
+  ) {
+    setExistingBenefits((current) =>
+      current.map((benefit) =>
+        benefit.id === benefitId
+          ? { ...benefit, name: value }
+          : benefit,
+      ),
+    );
+    setUpdatedBenefitIds((current) =>
+      current.includes(benefitId)
+        ? current
+        : [...current, benefitId],
     );
   }
 
@@ -572,14 +635,24 @@ export function VenueFormScreen({
       return;
     }
 
+    const normalizedExistingRules = existingRules.map((rule) => ({
+      ...rule,
+      name: rule.name.trim(),
+    }));
     const normalizedRules = rules
       .map((rule) => ({
         ...rule,
         name: rule.name.trim(),
       }))
       .filter((rule) => rule.name !== "");
+
+    if (normalizedExistingRules.some((rule) => !rule.name)) {
+      setError("Nội quy đã lưu không được để trống.");
+      return;
+    }
+
     const allRuleNames = [
-      ...existingRules,
+      ...normalizedExistingRules.map((rule) => rule.name),
       ...normalizedRules.map((rule) => rule.name),
     ].map((rule) => rule.toLowerCase());
 
@@ -588,19 +661,37 @@ export function VenueFormScreen({
       return;
     }
 
-    if (normalizedRules.some((rule) => rule.name.length > 255)) {
+    if (
+      [...normalizedExistingRules, ...normalizedRules].some(
+        (rule) => rule.name.length > 255,
+      )
+    ) {
       setError("Mỗi nội quy không được vượt quá 255 ký tự.");
       return;
     }
 
+    const normalizedExistingBenefits = existingBenefits.map(
+      (benefit) => ({
+        ...benefit,
+        name: benefit.name.trim(),
+      }),
+    );
     const normalizedBenefits = benefits
       .map((benefit) => ({
         ...benefit,
         name: benefit.name.trim(),
       }))
       .filter((benefit) => benefit.name !== "");
+
+    if (
+      normalizedExistingBenefits.some((benefit) => !benefit.name)
+    ) {
+      setError("Tiện ích đã lưu không được để trống.");
+      return;
+    }
+
     const allBenefitNames = [
-      ...existingBenefits,
+      ...normalizedExistingBenefits.map((benefit) => benefit.name),
       ...normalizedBenefits.map((benefit) => benefit.name),
     ].map((benefit) => benefit.toLowerCase());
 
@@ -609,7 +700,11 @@ export function VenueFormScreen({
       return;
     }
 
-    if (normalizedBenefits.some((benefit) => benefit.name.length > 100)) {
+    if (
+      [...normalizedExistingBenefits, ...normalizedBenefits].some(
+        (benefit) => benefit.name.length > 100,
+      )
+    ) {
       setError("Mỗi tiện ích không được vượt quá 100 ký tự.");
       return;
     }
@@ -654,6 +749,16 @@ export function VenueFormScreen({
       );
 
       await Promise.all(
+        normalizedExistingRules
+          .filter((rule) => updatedRuleIds.includes(rule.id))
+          .map((rule) =>
+            ruleService.update(rule.id, {
+              name: rule.name,
+            }),
+          ),
+      );
+
+      await Promise.all(
         normalizedRules.map((rule) =>
           ruleService.create(savedVenueId, {
             name: rule.name,
@@ -662,10 +767,32 @@ export function VenueFormScreen({
       );
 
       await Promise.all(
+        normalizedExistingBenefits
+          .filter((benefit) =>
+            updatedBenefitIds.includes(benefit.id),
+          )
+          .map((benefit) =>
+            benefitService.update(benefit.id, {
+              name: benefit.name,
+            }),
+          ),
+      );
+
+      await Promise.all(
         normalizedBenefits.map((benefit) =>
           benefitService.create(savedVenueId, {
             name: benefit.name,
           }),
+        ),
+      );
+
+      await Promise.all(
+        deletedRuleIds.map((ruleId) => ruleService.remove(ruleId)),
+      );
+
+      await Promise.all(
+        deletedBenefitIds.map((benefitId) =>
+          benefitService.remove(benefitId),
         ),
       );
 
@@ -1050,10 +1177,33 @@ export function VenueFormScreen({
 
                 {existingBenefits.map((benefit) => (
                   <div
-                    key={benefit}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700"
+                    key={benefit.id}
+                    className="flex items-center gap-3"
                   >
-                    {benefit}
+                    <input
+                      value={benefit.name}
+                      maxLength={100}
+                      disabled={submitting}
+                      onChange={(event) =>
+                        updateExistingBenefitName(
+                          benefit.id,
+                          event.target.value,
+                        )
+                      }
+                      className="h-12 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77] focus:bg-white"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={submitting}
+                      onClick={() => removeExistingBenefit(benefit.id)}
+                      className="size-12 shrink-0 rounded-xl text-red-600"
+                      aria-label={`Xóa tiện ích ${benefit.name}`}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
                 ))}
 
@@ -1108,10 +1258,33 @@ export function VenueFormScreen({
 
                 {existingRules.map((rule) => (
                   <div
-                    key={rule}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700"
+                    key={rule.id}
+                    className="flex items-center gap-3"
                   >
-                    {rule}
+                    <input
+                      value={rule.name}
+                      maxLength={255}
+                      disabled={submitting}
+                      onChange={(event) =>
+                        updateExistingRuleName(
+                          rule.id,
+                          event.target.value,
+                        )
+                      }
+                      className="h-12 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77] focus:bg-white"
+                    />
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={submitting}
+                      onClick={() => removeExistingRule(rule.id)}
+                      className="size-12 shrink-0 rounded-xl text-red-600"
+                      aria-label={`Xóa nội quy ${rule.name}`}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </div>
                 ))}
 

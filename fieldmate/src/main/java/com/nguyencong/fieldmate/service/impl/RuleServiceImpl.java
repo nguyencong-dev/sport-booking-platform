@@ -30,9 +30,7 @@ public class RuleServiceImpl implements RuleService {
 
     @Override
     @Transactional
-    public RuleResponse createRule(
-            Long venueId,
-            RuleRequest request) {
+    public RuleResponse createRule(Long venueId, RuleRequest request) {
 
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cụm sân"));
@@ -45,9 +43,7 @@ public class RuleServiceImpl implements RuleService {
 
         String ruleName = request.getName().trim();
 
-        if (ruleRepository.existsByVenueIdAndNameIgnoreCase(
-                venueId,
-                ruleName)) {
+        if (ruleRepository.existsByVenueIdAndNameIgnoreCase(venueId, ruleName)) {
             throw new DuplicateResourceException("Nội quy này đã tồn tại");
         }
 
@@ -61,28 +57,20 @@ public class RuleServiceImpl implements RuleService {
 
     @Override
     @Transactional
-    public RuleResponse updateRule(
-            Long id,
-            RuleRequest request) {
+    public RuleResponse updateRule(Long id, RuleRequest request) {
 
         Rule rule = ruleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nội quy"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        if (!rule.getVenue()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())) {
+        if (!rule.getVenue().getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Bạn không có quyền cập nhật nội quy này");
         }
 
         String ruleName = request.getName().trim();
 
-        boolean duplicated = ruleRepository.existsByVenueIdAndNameIgnoreCaseAndIdNot(
-                rule.getVenue().getId(),
-                ruleName,
-                id);
+        boolean duplicated = ruleRepository.existsByVenueIdAndNameIgnoreCaseAndIdNot(rule.getVenue().getId(), ruleName, id);
 
         if (duplicated) {
             throw new DuplicateResourceException("Nội quy này đã tồn tại");
@@ -103,10 +91,7 @@ public class RuleServiceImpl implements RuleService {
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        if (!rule.getVenue()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())) {
+        if (!rule.getVenue().getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Bạn không có quyền xóa nội quy này");
         }
 

@@ -54,6 +54,11 @@ const courtOwnerNavigation = [
     icon: Building2,
   },
   {
+    label: "Quản lý lịch đặt",
+    href: "/owner-bookings",
+    icon: CalendarDays,
+  },
+  {
     label: "Tài khoản nhận tiền",
     href: "/payment-accounts",
     icon: CreditCard,

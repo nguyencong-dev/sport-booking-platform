@@ -104,7 +104,7 @@ public class MomoPaymentStrategy implements PaymentGatewayStrategy {
                 + "&ipnUrl=" + momoConfig.getIpnUrl()
                 + "&orderId=" + orderId
                 + "&orderInfo=" + orderInfo
-                + "&partnerCode=" + credential.getPartnerCode()
+                + "&partnerCode=" + credential.getPartnerCode().trim()
                 + "&redirectUrl=" + momoConfig.getRedirectUrl()
                 + "&requestId=" + requestId
                 + "&requestType=" + momoConfig.getRequestType();
@@ -112,7 +112,7 @@ public class MomoPaymentStrategy implements PaymentGatewayStrategy {
         String signature = HmacUtils.hmacSha256(rawSignature, secretKey);
 
         return MomoCreateRequest.builder()
-                .partnerCode(credential.getPartnerCode())
+                .partnerCode(credential.getPartnerCode().trim())
                 .requestType(momoConfig.getRequestType())
                 .ipnUrl(momoConfig.getIpnUrl())
                 .redirectUrl(momoConfig.getRedirectUrl())

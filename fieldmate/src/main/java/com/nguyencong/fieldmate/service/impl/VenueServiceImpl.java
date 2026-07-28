@@ -189,9 +189,7 @@ public class VenueServiceImpl implements VenueService {
         User currentUser = currentUserProvider.getCurrentUser();
         Pageable pageable = PaginationUtils.createPageable(page);
 
-        return venueRepository
-                .findByOwnerId(currentUser.getId(), pageable)
-                .map(VenueMapper::toSummary);
+        return venueRepository.findByOwnerId(currentUser.getId(), pageable).map(VenueMapper::toSummary);
     }
 
     @Override

@@ -48,11 +48,8 @@ public class UserServiceImpl implements UserService {
 
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
 
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(
-                    request.getAvatar().getBytes(),
-                    Map.of(
-                            "folder",
-                            "fieldmate/avatars"));
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getAvatar().getBytes(),
+                    Map.of("folder", "fieldmate/avatars"));
 
             Object secureUrl = uploadResult.get("secure_url");
 
@@ -71,10 +68,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
-        return userRepository.findAllByOrderByIdDesc()
-                .stream()
-                .map(UserMapper::toResponse)
-                .toList();
+        return userRepository.findAllByOrderByIdDesc().stream().map(UserMapper::toResponse).toList();
     }
 
     @Override
@@ -88,17 +82,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse updateUserEnabled(
-            Long id,
-            boolean enabled) {
+    public UserResponse updateUserEnabled(Long id, boolean enabled) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
         User currentAdmin = currentUserProvider.getCurrentUser();
 
-        if (!enabled
-                && user.getId().equals(currentAdmin.getId())) {
+        if (!enabled && user.getId().equals(currentAdmin.getId())) {
             throw new BusinessRuleViolationException("Admin không thể tự khóa tài khoản của mình");
         }
 

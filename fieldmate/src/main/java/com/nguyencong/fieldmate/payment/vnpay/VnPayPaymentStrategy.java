@@ -92,7 +92,7 @@ public class VnPayPaymentStrategy implements PaymentGatewayStrategy {
 
         parameters.put("vnp_Version", vnPayConfig.getVersion());
         parameters.put("vnp_Command", vnPayConfig.getCommand());
-        parameters.put("vnp_TmnCode", credential.getTmnCode());
+        parameters.put("vnp_TmnCode", credential.getTmnCode().trim());
         parameters.put("vnp_Amount", amount);
         parameters.put("vnp_CurrCode", vnPayConfig.getCurrency());
         parameters.put("vnp_TxnRef", payment.getTransactionCode());

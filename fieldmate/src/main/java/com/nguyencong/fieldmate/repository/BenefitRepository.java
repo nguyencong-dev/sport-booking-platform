@@ -8,14 +8,9 @@ import com.nguyencong.fieldmate.entity.Benefit;
 
 public interface BenefitRepository extends JpaRepository<Benefit, Long> {
 
-    List<Benefit> findByVenueIdOrderByIdAsc(Long venueId);
+        List<Benefit> findByVenueIdOrderByIdAsc(Long venueId);
 
-    boolean existsByVenueIdAndNameIgnoreCase(
-            Long venueId,
-            String name);
+        boolean existsByVenueIdAndNameIgnoreCase(Long venueId, String name);
 
-    boolean existsByVenueIdAndNameIgnoreCaseAndIdNot(
-        Long venueId,
-        String name,
-        Long id);
+        boolean existsByVenueIdAndNameIgnoreCaseAndIdNot(Long venueId, String name, Long id);
 }

@@ -30,9 +30,7 @@ public class BenefitServiceImpl implements BenefitService {
 
     @Override
     @Transactional
-    public BenefitResponse createBenefit(
-            Long venueId,
-            BenefitRequest request) {
+    public BenefitResponse createBenefit(Long venueId, BenefitRequest request) {
 
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cụm sân"));
@@ -45,9 +43,7 @@ public class BenefitServiceImpl implements BenefitService {
 
         String benefitName = request.getName().trim();
 
-        boolean existed = benefitRepository.existsByVenueIdAndNameIgnoreCase(
-                venueId,
-                benefitName);
+        boolean existed = benefitRepository.existsByVenueIdAndNameIgnoreCase(venueId, benefitName);
 
         if (existed) {
             throw new DuplicateResourceException("Tiện ích này đã tồn tại");
@@ -63,29 +59,21 @@ public class BenefitServiceImpl implements BenefitService {
 
     @Override
     @Transactional
-    public BenefitResponse updateBenefit(
-            Long id,
-            BenefitRequest request) {
+    public BenefitResponse updateBenefit(Long id, BenefitRequest request) {
 
         Benefit benefit = benefitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tiện ích"));
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        if (!benefit.getVenue()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())) {
+        if (!benefit.getVenue().getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Bạn không có quyền cập nhật tiện ích này");
         }
 
         String benefitName = request.getName().trim();
 
         boolean duplicated = benefitRepository
-                .existsByVenueIdAndNameIgnoreCaseAndIdNot(
-                        benefit.getVenue().getId(),
-                        benefitName,
-                        id);
+                .existsByVenueIdAndNameIgnoreCaseAndIdNot(benefit.getVenue().getId(), benefitName, id);
 
         if (duplicated) {
             throw new DuplicateResourceException("Tiện ích này đã tồn tại");
@@ -106,10 +94,7 @@ public class BenefitServiceImpl implements BenefitService {
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        if (!benefit.getVenue()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())) {
+        if (!benefit.getVenue().getOwner().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Bạn không có quyền xóa tiện ích này");
         }
 

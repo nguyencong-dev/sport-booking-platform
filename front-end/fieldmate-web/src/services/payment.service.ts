@@ -27,4 +27,12 @@ export const paymentService = {
 
     return response.data;
   },
+
+  async getById(paymentId: number): Promise<PaymentResponse> {
+    const response = await fieldmateClient.get<PaymentResponse>(
+      `/secure/payments/${paymentId}`,
+    );
+
+    return response.data;
+  },
 };

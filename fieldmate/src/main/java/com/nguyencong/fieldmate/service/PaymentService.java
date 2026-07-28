@@ -11,9 +11,14 @@ import com.nguyencong.fieldmate.dto.response.VnPayIpnResponse;
 public interface PaymentService {
 
     PaymentResponse createPayment(Long bookingId, PaymentRequest request);
+
     List<PaymentResponse> getPaymentsByBookingId(Long bookingId);
+
     PaymentResponse getPaymentById(Long id);
+
     void handleMomoIpn(MomoIpnRequest request);
+
     VnPayIpnResponse handleVnPayIpn(Map<String, String> parameters);
+
     String handleVnPayReturn(Map<String, String> parameters);
 }

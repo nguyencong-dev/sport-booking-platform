@@ -2,7 +2,16 @@ import { fieldmateClient } from "@/services/clients/fieldmate-client";
 import type {
   BookingRequest,
   BookingResponse,
+  BookingStatus,
 } from "@/types/booking";
+import type { PageResponse } from "@/types/pagination";
+
+type GetVenueBookingsParams = {
+  page?: number;
+  date?: string;
+  status?: BookingStatus;
+  bookingId?: number;
+};
 
 export const bookingService = {
   async create(request: BookingRequest): Promise<BookingResponse> {
@@ -30,10 +39,20 @@ export const bookingService = {
     return response.data;
   },
 
-  async getByVenueId(venueId: number): Promise<BookingResponse[]> {
-    const response = await fieldmateClient.get<BookingResponse[]>(
-      `/secure/venues/${venueId}/bookings`,
-    );
+  async getByVenueId(
+    venueId: number,
+    params: GetVenueBookingsParams = {},
+  ): Promise<PageResponse<BookingResponse>> {
+    const response = await fieldmateClient.get<
+      PageResponse<BookingResponse>
+    >(`/secure/venues/${venueId}/bookings`, {
+      params: {
+        page: params.page ?? 0,
+        date: params.date || undefined,
+        status: params.status,
+        bookingId: params.bookingId,
+      },
+    });
 
     return response.data;
   },

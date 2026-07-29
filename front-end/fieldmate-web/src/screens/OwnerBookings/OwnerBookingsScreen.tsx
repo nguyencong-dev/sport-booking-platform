@@ -166,38 +166,31 @@ export function OwnerBookingsScreen() {
   >("ALL");
   const [dateFilter, setDateFilter] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalBookings, setTotalBookings] = useState(0);
   const [loadingVenues, setLoadingVenues] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
-  const filteredBookings = useMemo(() => {
-    const normalizedSearch = searchValue.trim().toLowerCase();
+  const bookingIdFilter = useMemo(() => {
+    const normalizedValue = searchValue.trim().replace(/^#/, "");
 
-    return bookings.filter((booking) => {
-      const matchesStatus =
-        statusFilter === "ALL" || booking.status === statusFilter;
-      const matchesDate =
-        !dateFilter || booking.bookingDate === dateFilter;
-      const matchesSearch =
-        !normalizedSearch ||
-        booking.customerName.toLowerCase().includes(normalizedSearch) ||
-        booking.courtName.toLowerCase().includes(normalizedSearch) ||
-        String(booking.id).includes(normalizedSearch);
-
-      return matchesStatus && matchesDate && matchesSearch;
-    });
-  }, [bookings, dateFilter, searchValue, statusFilter]);
+    return /^\d+$/.test(normalizedValue)
+      ? Number(normalizedValue)
+      : undefined;
+  }, [searchValue]);
 
   const statistics = useMemo(
     () => ({
-      total: bookings.length,
+      total: totalBookings,
       paid: bookings.reduce(
         (total, booking) => total + booking.paidAmount,
         0,
       ),
     }),
-    [bookings],
+    [bookings, totalBookings],
   );
 
   useEffect(() => {
@@ -279,11 +272,21 @@ export function OwnerBookingsScreen() {
         setSelectedBooking(null);
         setPayments([]);
 
-        const data =
-          await bookingService.getByVenueId(currentVenueId);
+        const data = await bookingService.getByVenueId(
+          currentVenueId,
+          {
+            page: currentPage,
+            date: dateFilter || undefined,
+            status:
+              statusFilter === "ALL" ? undefined : statusFilter,
+            bookingId: bookingIdFilter,
+          },
+        );
 
         if (active) {
-          setBookings(data);
+          setBookings(data.content);
+          setTotalPages(data.totalPages);
+          setTotalBookings(data.totalElements);
         }
       } catch (requestError) {
         if (active) {
@@ -306,7 +309,14 @@ export function OwnerBookingsScreen() {
     return () => {
       active = false;
     };
-  }, [selectedVenueId, user?.role]);
+  }, [
+    bookingIdFilter,
+    currentPage,
+    dateFilter,
+    selectedVenueId,
+    statusFilter,
+    user?.role,
+  ]);
 
   async function loadBookingDetails(bookingId: number) {
     try {
@@ -340,12 +350,22 @@ export function OwnerBookingsScreen() {
     try {
       setLoadingBookings(true);
       setError("");
-      const data =
-        await bookingService.getByVenueId(selectedVenueId);
-      setBookings(data);
+      const data = await bookingService.getByVenueId(
+        selectedVenueId,
+        {
+          page: currentPage,
+          date: dateFilter || undefined,
+          status:
+            statusFilter === "ALL" ? undefined : statusFilter,
+          bookingId: bookingIdFilter,
+        },
+      );
+      setBookings(data.content);
+      setTotalPages(data.totalPages);
+      setTotalBookings(data.totalElements);
 
       if (selectedBooking) {
-        const updatedBooking = data.find(
+        const updatedBooking = data.content.find(
           (booking) => booking.id === selectedBooking.id,
         );
         setSelectedBooking(updatedBooking ?? null);
@@ -464,7 +484,7 @@ export function OwnerBookingsScreen() {
               />
               <StatisticCard
                 icon={Banknote}
-                label="Đã thanh toán"
+                label="Đã thanh toán trên trang"
                 value={formatCurrency(statistics.paid)}
                 iconClassName="bg-emerald-100 text-emerald-600"
               />
@@ -478,9 +498,10 @@ export function OwnerBookingsScreen() {
                   </span>
                   <select
                     value={selectedVenueId ?? ""}
-                    onChange={(event) =>
-                      setSelectedVenueId(Number(event.target.value))
-                    }
+                    onChange={(event) => {
+                      setSelectedVenueId(Number(event.target.value));
+                      setCurrentPage(0);
+                    }}
                     className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 outline-none focus:border-[#073b77]"
                   >
                     {venues.map((venue) => (
@@ -498,9 +519,10 @@ export function OwnerBookingsScreen() {
                   <input
                     type="date"
                     value={dateFilter}
-                    onChange={(event) =>
-                      setDateFilter(event.target.value)
-                    }
+                    onChange={(event) => {
+                      setDateFilter(event.target.value);
+                      setCurrentPage(0);
+                    }}
                     className="h-11 w-full min-w-0 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77]"
                   />
                 </label>
@@ -511,11 +533,12 @@ export function OwnerBookingsScreen() {
                   </span>
                   <select
                     value={statusFilter}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       setStatusFilter(
                         event.target.value as BookingStatus | "ALL",
-                      )
-                    }
+                      );
+                      setCurrentPage(0);
+                    }}
                     className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77]"
                   >
                     <option value="ALL">Tất cả trạng thái</option>
@@ -537,10 +560,14 @@ export function OwnerBookingsScreen() {
                     <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                     <input
                       value={searchValue}
-                      onChange={(event) =>
-                        setSearchValue(event.target.value)
-                      }
-                      placeholder="Mã, khách hàng, sân..."
+                      inputMode="numeric"
+                      onChange={(event) => {
+                        setSearchValue(
+                          event.target.value.replace(/\D/g, ""),
+                        );
+                        setCurrentPage(0);
+                      }}
+                      placeholder="Nhập mã booking"
                       className="h-11 w-full rounded-xl border border-slate-200 pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77]"
                     />
                   </span>
@@ -555,7 +582,7 @@ export function OwnerBookingsScreen() {
                     Danh sách lịch đặt
                   </h2>
                   <span className="text-sm font-semibold text-slate-500">
-                    {filteredBookings.length} kết quả
+                    {totalBookings} kết quả
                   </span>
                 </div>
 
@@ -563,7 +590,7 @@ export function OwnerBookingsScreen() {
                   <div className="flex min-h-0 flex-1 items-center justify-center">
                     <LoaderCircle className="size-7 animate-spin text-[#ff174f]" />
                   </div>
-                ) : filteredBookings.length === 0 ? (
+                ) : bookings.length === 0 ? (
                   <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
                     <CalendarCheck2 className="size-10 text-slate-300" />
                     <p className="mt-4 font-semibold text-slate-500">
@@ -572,7 +599,7 @@ export function OwnerBookingsScreen() {
                   </div>
                 ) : (
                   <div className="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto">
-                    {filteredBookings.map((booking) => {
+                    {bookings.map((booking) => {
                       const status =
                         bookingStatusConfig[booking.status];
                       const canComplete =
@@ -696,6 +723,39 @@ export function OwnerBookingsScreen() {
                     })}
                   </div>
                 )}
+
+                <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={currentPage === 0 || loadingBookings}
+                    onClick={() =>
+                      setCurrentPage((current) => current - 1)
+                    }
+                    className="rounded-xl font-bold"
+                  >
+                    Trang trước
+                  </Button>
+                  <span className="text-sm font-bold text-slate-500">
+                    {totalPages === 0
+                      ? "Trang 0 / 0"
+                      : `Trang ${currentPage + 1} / ${totalPages}`}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={
+                      currentPage + 1 >= totalPages ||
+                      loadingBookings
+                    }
+                    onClick={() =>
+                      setCurrentPage((current) => current + 1)
+                    }
+                    className="rounded-xl font-bold"
+                  >
+                    Trang sau
+                  </Button>
+                </div>
               </section>
 
               <BookingDetails

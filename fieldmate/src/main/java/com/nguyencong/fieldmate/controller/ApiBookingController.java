@@ -1,8 +1,11 @@
 package com.nguyencong.fieldmate.controller;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,10 +15,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nguyencong.fieldmate.dto.request.BookingRequest;
 import com.nguyencong.fieldmate.dto.response.BookingResponse;
+import com.nguyencong.fieldmate.entity.enums.BookingStatus;
 import com.nguyencong.fieldmate.service.BookingService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -51,9 +56,12 @@ public class ApiBookingController {
 
     @PreAuthorize("hasRole('COURT_OWNER')")
     @GetMapping("/secure/venues/{id}/bookings")
-    public ResponseEntity<List<BookingResponse>> getBookingsByVenueId(@PathVariable Long id) {
+    public ResponseEntity<Page<BookingResponse>> getBookingsByVenueId(@PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) BookingStatus status, @RequestParam(required = false) Long bookingId) {
 
-        return new ResponseEntity<>(this.bookingService.getBookingsByVenueId(id), HttpStatus.OK);
+        return new ResponseEntity<>(this.bookingService.getBookingsByVenueId(id, date, status, bookingId, page), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('COURT_OWNER')")
@@ -67,6 +75,6 @@ public class ApiBookingController {
     @GetMapping("/secure/bookings")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
 
-        return new ResponseEntity<>( this.bookingService.getAllBookings(), HttpStatus.OK);
+        return new ResponseEntity<>(this.bookingService.getAllBookings(), HttpStatus.OK);
     }
 }

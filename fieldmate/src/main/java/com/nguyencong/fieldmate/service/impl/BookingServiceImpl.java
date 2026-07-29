@@ -11,6 +11,9 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,8 +36,10 @@ import com.nguyencong.fieldmate.mapper.BookingMapper;
 import com.nguyencong.fieldmate.repository.BookingRepository;
 import com.nguyencong.fieldmate.repository.CourtRepository;
 import com.nguyencong.fieldmate.repository.VenueRepository;
+import com.nguyencong.fieldmate.repository.spec.BookingSpecification;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.BookingService;
+import com.nguyencong.fieldmate.utils.PaginationUtils;
 
 import lombok.RequiredArgsConstructor;
 
@@ -160,7 +165,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByVenueId(Long venueId) {
+    public Page<BookingResponse> getBookingsByVenueId(Long venueId, LocalDate date, BookingStatus status,
+            Long bookingId, int page) {
 
         Venue venue = venueRepository.findById(venueId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cụm sân"));
@@ -173,8 +179,11 @@ public class BookingServiceImpl implements BookingService {
             throw new AccessDeniedException("Không có quyền xem lịch đặt của cụm sân này");
         }
 
-        return bookingRepository.findByCourt_Venue_IdOrderByBookingDateDescStartTimeDesc(venueId).stream()
-                .map(BookingMapper::toResponse).toList();
+        Pageable pageable = PaginationUtils.createPageable(page);
+
+        Specification<Booking> specification = BookingSpecification.byFilters(venueId, date, status, bookingId);
+
+        return bookingRepository.findAll(specification, pageable).map(BookingMapper::toResponse);
     }
 
     @Override

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ import com.nguyencong.fieldmate.mapper.VenueBookingScheduleMapper;
 import com.nguyencong.fieldmate.repository.BookingRepository;
 import com.nguyencong.fieldmate.repository.CourtRepository;
 import com.nguyencong.fieldmate.repository.VenueRepository;
+import com.nguyencong.fieldmate.repository.spec.VenueSpecification;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.VenueService;
 import com.nguyencong.fieldmate.utils.PaginationUtils;
@@ -57,15 +59,17 @@ public class VenueServiceImpl implements VenueService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId,
-            StatusVenue status, int page) {
+    public Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status, int page) {
+
         Pageable pageable = PaginationUtils.createPageable(page);
 
         String normalizedName = name == null || name.isBlank() ? null : name.trim();
+
         String normalizedAddress = address == null || address.isBlank() ? null : address.trim();
 
-        return venueRepository.findByFilters(normalizedName, normalizedAddress, sportTypeId, status, pageable)
-                .map(VenueMapper::toSummary);
+        Specification<Venue> specification = VenueSpecification.byFilters(normalizedName, normalizedAddress, sportTypeId, status);
+
+        return venueRepository.findAll(specification, pageable).map(VenueMapper::toSummary);
     }
 
     public Venue findVenue(Long id) {

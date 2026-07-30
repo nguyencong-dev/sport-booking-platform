@@ -1,4 +1,4 @@
-export type PaymentMethod = "VNPAY" | "MOMO";
+export type PaymentMethod = "VNPAY" | "MOMO" | "CASH";
 
 export type PaymentType =
   | "DEPOSIT"

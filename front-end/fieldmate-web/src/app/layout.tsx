@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Montserrat } from "next/font/google";
-import { Footer } from "@/components/Footer/Footer";
+import { AppFooter } from "@/components/Footer/AppFooter";
 import { Header } from "@/components/Header/Header";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "leaflet/dist/leaflet.css";
@@ -36,7 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           <Header />
           {children}
-          <Footer />
+          <AppFooter />
         </AuthProvider>
       </body>
     </html>

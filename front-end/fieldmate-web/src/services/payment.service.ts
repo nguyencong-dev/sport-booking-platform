@@ -18,6 +18,16 @@ export const paymentService = {
     return response.data;
   },
 
+  async receiveRemainingCash(
+    bookingId: number,
+  ): Promise<PaymentResponse> {
+    const response = await fieldmateClient.post<PaymentResponse>(
+      `/secure/bookings/${bookingId}/cash-payments`,
+    );
+
+    return response.data;
+  },
+
   async getByBookingId(
     bookingId: number,
   ): Promise<PaymentResponse[]> {

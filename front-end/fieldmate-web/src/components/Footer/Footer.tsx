@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
+export type FooterVariant = "public" | "compact";
+
 const footerLinks = {
   "Khám phá": [
     { label: "Tìm sân", href: "/venues" },
@@ -19,7 +21,59 @@ const footerLinks = {
   ],
 };
 
-export function Footer() {
+type FooterProps = {
+  variant?: FooterVariant;
+};
+
+export function Footer({ variant = "public" }: FooterProps) {
+  if (variant === "compact") {
+    return (
+      <footer className="mt-auto border-t border-slate-200 bg-white">
+        <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-4 py-5 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-base font-black text-[#073b77]"
+            >
+              FieldMate
+            </Link>
+            <span className="hidden h-4 w-px bg-slate-200 sm:block" />
+            <p className="text-xs font-medium text-slate-500">
+              © {new Date().getFullYear()} FieldMate
+            </p>
+          </div>
+
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link
+              href="/"
+              className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
+            >
+              Trang chủ
+            </Link>
+            <Link
+              href="/venues"
+              className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
+            >
+              Sân tập
+            </Link>
+            <Link
+              href="/terms"
+              className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
+            >
+              Điều khoản
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
+            >
+              Bảo mật
+            </Link>
+          </nav>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="mt-auto border-t border-white/10 bg-[#073b77] text-blue-100">
       <div className="mx-auto grid w-full max-w-[1280px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_2fr] lg:px-8">
@@ -41,7 +95,6 @@ export function Footer() {
             Nền tảng giúp bạn tìm kiếm và đặt sân thể thao nhanh chóng, minh
             bạch và thuận tiện.
           </p>
-
         </div>
 
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

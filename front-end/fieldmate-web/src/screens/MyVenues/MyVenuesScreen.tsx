@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog/ConfirmationDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { venueService } from "@/services/venue.service";
 import type {
@@ -68,6 +69,8 @@ export function MyVenuesScreen() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<number | null>(null);
+  const [venueToDelete, setVenueToDelete] =
+    useState<VenueSummaryResponse | null>(null);
   const [error, setError] = useState("");
 
   async function loadVenues(targetPage: number) {
@@ -119,14 +122,6 @@ export function MyVenuesScreen() {
   }, [isAuthenticated, ready, router, user]);
 
   async function handleDelete(venue: VenueSummaryResponse) {
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn xóa sân "${venue.name}"?`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setActionId(venue.id);
       setError("");
@@ -145,6 +140,7 @@ export function MyVenuesScreen() {
       }
     } finally {
       setActionId(null);
+      setVenueToDelete(null);
     }
   }
 
@@ -339,7 +335,7 @@ export function MyVenuesScreen() {
                                 variant="outline"
                                 size="icon"
                                 disabled={actionId === venue.id}
-                                onClick={() => handleDelete(venue)}
+                                onClick={() => setVenueToDelete(venue)}
                                 title="Xóa sân"
                                 className="rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700"
                               >
@@ -389,6 +385,26 @@ export function MyVenuesScreen() {
             </nav>
           )}
         </section>
+
+        <ConfirmationDialog
+          open={venueToDelete !== null}
+          title="Xóa sân tập"
+          description={`Bạn có chắc muốn xóa sân "${venueToDelete?.name ?? ""}"? Dữ liệu đã xóa sẽ không thể khôi phục.`}
+          confirmLabel="Xóa sân"
+          loading={actionId === venueToDelete?.id}
+          variant="destructive"
+          icon={Trash2}
+          onOpenChange={(open) => {
+            if (!open) {
+              setVenueToDelete(null);
+            }
+          }}
+          onConfirm={() => {
+            if (venueToDelete) {
+              return handleDelete(venueToDelete);
+            }
+          }}
+        />
       </div>
     </main>
   );

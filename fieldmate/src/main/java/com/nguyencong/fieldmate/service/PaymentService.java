@@ -21,4 +21,6 @@ public interface PaymentService {
     VnPayIpnResponse handleVnPayIpn(Map<String, String> parameters);
 
     String handleVnPayReturn(Map<String, String> parameters);
+
+    PaymentResponse receiveRemainingCashPayment(Long bookingId);
 }

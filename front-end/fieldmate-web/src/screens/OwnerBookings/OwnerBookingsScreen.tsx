@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   CircleAlert,
   Eye,
+  HandCoins,
   LoaderCircle,
   RefreshCcw,
   Search,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog/ConfirmationDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookingService } from "@/services/booking.service";
 import { paymentService } from "@/services/payment.service";
@@ -37,6 +39,11 @@ import type { VenueSummaryResponse } from "@/types/venue";
 
 type ApiErrorResponse = {
   message?: string;
+};
+
+type BookingConfirmation = {
+  action: "COMPLETE" | "CASH";
+  booking: BookingResponse;
 };
 
 const bookingStatusConfig: Record<
@@ -94,6 +101,7 @@ const paymentStatusConfig: Record<
 const paymentMethodLabels = {
   MOMO: "MoMo",
   VNPAY: "VNPay",
+  CASH: "Tiền mặt",
 };
 
 const paymentTypeLabels = {
@@ -173,6 +181,11 @@ export function OwnerBookingsScreen() {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [completingId, setCompletingId] = useState<number | null>(null);
+  const [receivingCashId, setReceivingCashId] = useState<number | null>(
+    null,
+  );
+  const [confirmation, setConfirmation] =
+    useState<BookingConfirmation | null>(null);
   const [error, setError] = useState("");
   const bookingIdFilter = useMemo(() => {
     const normalizedValue = searchValue.trim().replace(/^#/, "");
@@ -383,14 +396,6 @@ export function OwnerBookingsScreen() {
   }
 
   async function handleComplete(booking: BookingResponse) {
-    const confirmed = window.confirm(
-      `Xác nhận booking #${booking.id} đã hoàn thành?`,
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setCompletingId(booking.id);
       setError("");
@@ -416,6 +421,41 @@ export function OwnerBookingsScreen() {
       );
     } finally {
       setCompletingId(null);
+      setConfirmation(null);
+    }
+  }
+
+  async function handleReceiveRemainingCash(
+    booking: BookingResponse,
+  ) {
+    try {
+      setReceivingCashId(booking.id);
+      setError("");
+
+      await paymentService.receiveRemainingCash(booking.id);
+
+      const [updatedBooking, updatedPayments] = await Promise.all([
+        bookingService.getById(booking.id),
+        paymentService.getByBookingId(booking.id),
+      ]);
+
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === updatedBooking.id ? updatedBooking : item,
+        ),
+      );
+      setSelectedBooking(updatedBooking);
+      setPayments(updatedPayments);
+    } catch (requestError) {
+      setError(
+        getErrorMessage(
+          requestError,
+          "Không thể xác nhận thanh toán tiền mặt.",
+        ),
+      );
+    } finally {
+      setReceivingCashId(null);
+      setConfirmation(null);
     }
   }
 
@@ -705,7 +745,10 @@ export function OwnerBookingsScreen() {
                                   completingId === booking.id
                                 }
                                 onClick={() =>
-                                  void handleComplete(booking)
+                                  setConfirmation({
+                                    action: "COMPLETE",
+                                    booking,
+                                  })
                                 }
                                 className="rounded-lg bg-emerald-600 font-bold text-white hover:bg-emerald-700"
                               >
@@ -763,12 +806,70 @@ export function OwnerBookingsScreen() {
                 payments={payments}
                 loading={loadingDetails}
                 completing={completingId === selectedBooking?.id}
-                onComplete={handleComplete}
+                receivingCash={
+                  receivingCashId === selectedBooking?.id
+                }
+                onComplete={(booking) =>
+                  setConfirmation({
+                    action: "COMPLETE",
+                    booking,
+                  })
+                }
+                onReceiveCash={(booking) =>
+                  setConfirmation({
+                    action: "CASH",
+                    booking,
+                  })
+                }
               />
             </div>
           </>
         )}
       </section>
+
+      <ConfirmationDialog
+        open={confirmation !== null}
+        title={
+          confirmation?.action === "CASH"
+            ? "Xác nhận nhận tiền mặt"
+            : "Xác nhận hoàn thành"
+        }
+        description={
+          confirmation?.action === "CASH"
+            ? `Bạn xác nhận đã nhận ${formatCurrency(confirmation.booking.remainingAmount)} tiền mặt cho booking #${confirmation.booking.id}. Giao dịch sẽ được ghi nhận là đã thanh toán.`
+            : `Bạn xác nhận booking #${confirmation?.booking.id ?? ""} đã hoàn thành.`
+        }
+        confirmLabel={
+          confirmation?.action === "CASH"
+            ? "Đã nhận tiền"
+            : "Hoàn thành"
+        }
+        loading={
+          completingId !== null || receivingCashId !== null
+        }
+        variant={
+          confirmation?.action === "CASH" ? "warning" : "success"
+        }
+        icon={
+          confirmation?.action === "CASH"
+            ? HandCoins
+            : CheckCircle2
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmation(null);
+          }
+        }}
+        onConfirm={() => {
+          if (!confirmation) {
+            return;
+          }
+
+          return confirmation.action === "CASH"
+            ? handleReceiveRemainingCash(confirmation.booking)
+            : handleComplete(confirmation.booking);
+        }}
+      />
     </main>
   );
 }
@@ -808,7 +909,9 @@ type BookingDetailsProps = {
   payments: PaymentResponse[];
   loading: boolean;
   completing: boolean;
-  onComplete: (booking: BookingResponse) => Promise<void>;
+  receivingCash: boolean;
+  onComplete: (booking: BookingResponse) => void;
+  onReceiveCash: (booking: BookingResponse) => void;
 };
 
 function BookingDetails({
@@ -816,7 +919,9 @@ function BookingDetails({
   payments,
   loading,
   completing,
+  receivingCash,
   onComplete,
+  onReceiveCash,
 }: BookingDetailsProps) {
   if (loading) {
     return (
@@ -845,6 +950,9 @@ function BookingDetails({
 
   const bookingStatus = bookingStatusConfig[booking.status];
   const canComplete = canCompleteBooking(booking);
+  const canReceiveCash =
+    booking.status === "CONFIRMED" &&
+    booking.remainingAmount > 0;
 
   return (
     <section className="flex h-[720px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:sticky xl:top-6">
@@ -861,11 +969,26 @@ function BookingDetails({
           <Badge className={`border-0 ${bookingStatus.className}`}>
             {bookingStatus.label}
           </Badge>
+          {canReceiveCash && (
+            <Button
+              type="button"
+              disabled={receivingCash}
+              onClick={() => onReceiveCash(booking)}
+              className="rounded-xl bg-amber-500 font-bold text-white hover:bg-amber-600"
+            >
+              {receivingCash ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <HandCoins className="size-4" />
+              )}
+              Nhận {formatCurrency(booking.remainingAmount)}
+            </Button>
+          )}
           {canComplete && (
             <Button
               type="button"
               disabled={completing}
-              onClick={() => void onComplete(booking)}
+              onClick={() => onComplete(booking)}
               className="rounded-xl bg-emerald-600 font-bold text-white hover:bg-emerald-700"
             >
               {completing ? (

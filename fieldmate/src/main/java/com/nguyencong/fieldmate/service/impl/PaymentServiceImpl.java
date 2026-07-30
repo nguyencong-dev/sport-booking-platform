@@ -79,7 +79,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponse createPayment(Long bookingId, PaymentRequest request) {
 
-        Booking booking = bookingRepository.findByIdWithDetails(bookingId)
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch đặt sân"));
 
         User currentCustomer = currentUserProvider.getCurrentUser();
@@ -133,6 +133,63 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentGatewayResult gatewayResult = strategy.createPayment(savedPayment);
 
         return PaymentMapper.toResponse(savedPayment, gatewayResult);
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse receiveRemainingCashPayment(Long bookingId) {
+
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch đặt sân"));
+
+        User currentOwner = currentUserProvider.getCurrentUser();
+
+        Long bookingOwnerId = booking.getCourt().getVenue().getOwner().getId();
+
+        if (!bookingOwnerId.equals(currentOwner.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền nhận thanh toán của booking này");
+        }
+
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new BusinessRuleViolationException("Chỉ có thể nhận tiền mặt cho booking đã xác nhận");
+        }
+
+        boolean pendingPaymentExists = paymentRepository.existsByBookingIdAndStatus(bookingId, PaymentStatus.PENDING);
+
+        if (pendingPaymentExists) {
+            throw new BusinessRuleViolationException("Booking đang có một giao dịch online chờ thanh toán");
+        }
+
+        BigDecimal paidAmount = calculatePaidAmount(booking);
+
+        if (paidAmount.compareTo(booking.getRequiredDeposit()) < 0) {
+            throw new BusinessRuleViolationException("Booking chưa thanh toán đủ tiền cọc");
+        }
+
+        BigDecimal remainingAmount = booking.getTotalPrice().subtract(paidAmount);
+
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleViolationException("Booking đã được thanh toán đầy đủ");
+        }
+
+        Payment payment = Payment.builder()
+                .booking(booking)
+                .amount(remainingAmount)
+                .type(PaymentType.REMAINING)
+                .status(PaymentStatus.PAID)
+                .paymentMethod(PaymentMethod.CASH)
+                .transactionCode(generateCashTransactionCode())
+                .paidAt(LocalDateTime.now())
+                .build();
+
+        Payment savedPayment = paymentRepository.save(payment);
+
+        return PaymentMapper.toResponse(savedPayment);
+    }
+
+    private String generateCashTransactionCode() {
+
+        return "CASH_" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
 
     private void validateBooking(Booking booking) {
@@ -300,7 +357,7 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("Số tiền thanh toán không khớp");
         }
 
-        if (payment.getStatus() == PaymentStatus.PAID || payment.getStatus() == PaymentStatus.REFUNDED) {
+        if (payment.getStatus() != PaymentStatus.PENDING) {
             return;
         }
 
@@ -399,8 +456,7 @@ public class PaymentServiceImpl implements PaymentService {
                 return new VnPayIpnResponse("04", "Invalid amount");
             }
 
-            if (payment.getStatus() == PaymentStatus.PAID
-                    || payment.getStatus() == PaymentStatus.REFUNDED) {
+            if (payment.getStatus() != PaymentStatus.PENDING) {
                 return new VnPayIpnResponse("02", "Order already confirmed");
             }
 

@@ -1,7 +1,8 @@
 package com.nguyencong.fieldmate.service;
 
 import java.io.IOException;
-import java.util.List;
+
+import org.springframework.data.domain.Page;
 
 import com.nguyencong.fieldmate.dto.request.UserRequest;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
@@ -11,7 +12,7 @@ public interface UserService {
 
     UserResponse updateCurrentUser(UserRequest request) throws IOException;
 
-    List<UserResponse> getAllUsers();
+    Page<UserResponse> getAllUsers(String email, Boolean enabled, int page);
 
     UserResponse getUserById(Long id);
 

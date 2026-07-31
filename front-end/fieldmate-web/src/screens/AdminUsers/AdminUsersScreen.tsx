@@ -2,8 +2,14 @@
 
 import axios from "axios";
 import Link from "next/link";
-import { Eye, Power, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Power,
+  Search,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   AdminEmpty,
@@ -22,6 +28,8 @@ type ApiErrorResponse = {
   message?: string;
 };
 
+type EnabledFilter = "ALL" | "ACTIVE" | "LOCKED";
+
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Quản trị viên",
   COURT_OWNER: "Chủ sân",
@@ -30,7 +38,13 @@ const roleLabels: Record<UserRole, string> = {
 
 export function AdminUsersScreen() {
   const [users, setUsers] = useState<UserResponse[]>([]);
-  const [query, setQuery] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [email, setEmail] = useState("");
+  const [enabledFilter, setEnabledFilter] =
+    useState<EnabledFilter>("ALL");
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [selectedUser, setSelectedUser] =
@@ -38,12 +52,47 @@ export function AdminUsersScreen() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setPage(0);
+      setEmail(emailInput.trim());
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [emailInput]);
+
+  useEffect(() => {
+    let active = true;
+
     async function loadUsers() {
       try {
         setLoading(true);
         setError("");
-        setUsers(await userService.getAll());
+
+        const pageData = await userService.getAll({
+          email,
+          enabled:
+            enabledFilter === "ALL"
+              ? undefined
+              : enabledFilter === "ACTIVE",
+          page,
+        });
+
+        if (!active) {
+          return;
+        }
+
+        if (pageData.totalPages > 0 && page >= pageData.totalPages) {
+          setPage(pageData.totalPages - 1);
+          return;
+        }
+
+        setUsers(pageData.content);
+        setTotalPages(pageData.totalPages);
       } catch (requestError) {
+        if (!active) {
+          return;
+        }
+
         if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
           setError(
             requestError.response?.data?.message ??
@@ -53,33 +102,18 @@ export function AdminUsersScreen() {
           setError("Đã xảy ra lỗi khi tải người dùng.");
         }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
     void loadUsers();
-  }, []);
 
-  const filteredUsers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return users;
-    }
-
-    return users.filter((user) =>
-      [
-        user.email,
-        user.phoneNumber,
-        user.firstName,
-        user.lastName,
-        roleLabels[user.role],
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery),
-    );
-  }, [query, users]);
+    return () => {
+      active = false;
+    };
+  }, [email, enabledFilter, page, refreshKey]);
 
   async function handleToggleEnabled() {
     if (!selectedUser) {
@@ -89,17 +123,12 @@ export function AdminUsersScreen() {
     try {
       setUpdating(true);
       setError("");
-      const updatedUser = await userService.updateEnabled(
+      await userService.updateEnabled(
         selectedUser.id,
         !selectedUser.enabled,
       );
-
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === updatedUser.id ? updatedUser : user,
-        ),
-      );
       setSelectedUser(null);
+      setRefreshKey((current) => current + 1);
     } catch (requestError) {
       if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
         setError(
@@ -120,14 +149,30 @@ export function AdminUsersScreen() {
         eyebrow="Quản lý tài khoản"
         title="Người dùng"
         action={
-          <div className="relative w-full sm:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Tìm tên, email, số điện thoại..."
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm font-medium outline-none transition focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
-            />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <select
+              value={enabledFilter}
+              onChange={(event) => {
+                setPage(0);
+                setEnabledFilter(event.target.value as EnabledFilter);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
+            >
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ACTIVE">Hoạt động</option>
+              <option value="LOCKED">Đã khóa</option>
+            </select>
+
+            <div className="relative w-full sm:w-80">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={emailInput}
+                onChange={(event) => setEmailInput(event.target.value)}
+                placeholder="Tìm theo email..."
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm font-medium outline-none transition focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
+              />
+            </div>
           </div>
         }
       />
@@ -137,7 +182,7 @@ export function AdminUsersScreen() {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <AdminLoading />
-        ) : filteredUsers.length === 0 ? (
+        ) : users.length === 0 ? (
           <AdminEmpty label="Không tìm thấy người dùng phù hợp." />
         ) : (
           <div className="overflow-x-auto">
@@ -153,7 +198,7 @@ export function AdminUsersScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/70">
                     <td className="px-5 py-4">
                       <p className="font-bold text-slate-800">
@@ -213,6 +258,39 @@ export function AdminUsersScreen() {
           </div>
         )}
       </section>
+
+      {!loading && totalPages > 1 && (
+        <nav
+          aria-label="Phân trang người dùng"
+          className="mt-6 flex items-center justify-center gap-2"
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={page === 0}
+            onClick={() => setPage((current) => current - 1)}
+            className="rounded-xl bg-white"
+          >
+            <ChevronLeft />
+          </Button>
+
+          <span className="px-3 text-sm font-bold text-[#073b77]">
+            {page + 1}/{totalPages}
+          </span>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((current) => current + 1)}
+            className="rounded-xl bg-white"
+          >
+            <ChevronRight />
+          </Button>
+        </nav>
+      )}
 
       <ConfirmationDialog
         open={Boolean(selectedUser)}

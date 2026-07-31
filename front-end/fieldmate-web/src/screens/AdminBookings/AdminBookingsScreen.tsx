@@ -2,8 +2,8 @@
 
 import axios from "axios";
 import Link from "next/link";
-import { Eye, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Eye, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   AdminEmpty,
@@ -41,18 +41,53 @@ const statusConfig: Record<
 
 export function AdminBookingsScreen() {
   const [bookings, setBookings] = useState<BookingResponse[]>([]);
-  const [query, setQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<BookingStatus | "ALL">("ALL");
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setPage(0);
+      setSearch(searchInput.trim());
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  useEffect(() => {
+    let active = true;
+
     async function loadBookings() {
       try {
         setLoading(true);
         setError("");
-        setBookings(await bookingService.getAll());
+
+        const pageData = await bookingService.getAll({
+          search,
+          status: status === "ALL" ? undefined : status,
+          page,
+        });
+
+        if (!active) {
+          return;
+        }
+
+        if (pageData.totalPages > 0 && page >= pageData.totalPages) {
+          setPage(pageData.totalPages - 1);
+          return;
+        }
+
+        setBookings(pageData.content);
+        setTotalPages(pageData.totalPages);
       } catch (requestError) {
+        if (!active) {
+          return;
+        }
+
         if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
           setError(
             requestError.response?.data?.message ??
@@ -62,34 +97,18 @@ export function AdminBookingsScreen() {
           setError("Đã xảy ra lỗi khi tải booking.");
         }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
     void loadBookings();
-  }, []);
 
-  const filteredBookings = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return bookings.filter((booking) => {
-      const matchesStatus =
-        status === "ALL" || booking.status === status;
-      const matchesQuery =
-        !normalizedQuery ||
-        [
-          booking.id,
-          booking.customerName,
-          booking.venueName,
-          booking.courtName,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery);
-
-      return matchesStatus && matchesQuery;
-    });
-  }, [bookings, query, status]);
+    return () => {
+      active = false;
+    };
+  }, [page, search, status]);
 
   return (
     <>
@@ -101,17 +120,19 @@ export function AdminBookingsScreen() {
             <div className="relative sm:w-72">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
               <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                type="search"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Mã, khách hàng, sân..."
                 className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm font-medium outline-none focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
               />
             </div>
             <select
               value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as BookingStatus | "ALL")
-              }
+              onChange={(event) => {
+                setPage(0);
+                setStatus(event.target.value as BookingStatus | "ALL");
+              }}
               className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 outline-none focus:border-[#ff174f]"
             >
               <option value="ALL">Tất cả trạng thái</option>
@@ -132,7 +153,7 @@ export function AdminBookingsScreen() {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {loading ? (
           <AdminLoading />
-        ) : filteredBookings.length === 0 ? (
+        ) : bookings.length === 0 ? (
           <AdminEmpty label="Không tìm thấy booking phù hợp." />
         ) : (
           <div className="overflow-x-auto">
@@ -149,7 +170,7 @@ export function AdminBookingsScreen() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredBookings.map((booking) => {
+                {bookings.map((booking) => {
                   const bookingStatus = statusConfig[booking.status];
 
                   return (
@@ -214,6 +235,39 @@ export function AdminBookingsScreen() {
           </div>
         )}
       </section>
+
+      {!loading && totalPages > 1 && (
+        <nav
+          aria-label="Phân trang booking"
+          className="mt-6 flex items-center justify-center gap-2"
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={page === 0}
+            onClick={() => setPage((current) => current - 1)}
+            className="rounded-xl bg-white"
+          >
+            <ChevronLeft />
+          </Button>
+
+          <span className="px-3 text-sm font-bold text-[#073b77]">
+            {page + 1}/{totalPages}
+          </span>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((current) => current + 1)}
+            className="rounded-xl bg-white"
+          >
+            <ChevronRight />
+          </Button>
+        </nav>
+      )}
     </>
   );
 }

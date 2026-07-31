@@ -70,6 +70,10 @@ public class BookingServiceImpl implements BookingService {
         Court court = courtRepository.findByIdForUpdate(request.getCourtId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân"));
 
+        if (!Boolean.TRUE.equals(court.getVenue().getOwner().getEnabled())) {
+            throw new BusinessRuleViolationException("Không thể đặt sân vì tài khoản chủ sân đã bị khóa");
+        }
+
         if (court.getStatus() != CourtStatus.ACTIVE) {
             throw new BusinessRuleViolationException("Sân hiện không hoạt động");
         }
@@ -231,8 +235,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> getAllBookings() {
+    public Page<BookingResponse> getAllBookings(String search, BookingStatus status, int page) {
+        Pageable pageable = PaginationUtils.createPageable(page);
+        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
+        Specification<Booking> specification = BookingSpecification.byAdminFilters(normalizedSearch, status);
 
-        return bookingRepository.findAllByOrderByCreatedAtDesc().stream().map(BookingMapper::toResponse).toList();
+        return bookingRepository.findAll(specification, pageable).map(BookingMapper::toResponse);
     }
 }

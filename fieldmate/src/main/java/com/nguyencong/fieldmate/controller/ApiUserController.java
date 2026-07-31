@@ -1,9 +1,9 @@
 package com.nguyencong.fieldmate.controller;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,8 +46,9 @@ public class ApiUserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return new ResponseEntity<>(this.userService.getAllUsers(), HttpStatus.OK);
+    public ResponseEntity<Page<UserResponse>> getAllUsers(@RequestParam(required = false) String email,
+            @RequestParam(required = false) Boolean enabled, @RequestParam(defaultValue = "0") int page) {
+        return new ResponseEntity<>(this.userService.getAllUsers(email, enabled, page), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

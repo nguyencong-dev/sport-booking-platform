@@ -22,18 +22,20 @@ public final class VenueSpecification {
 
     public static Specification<Venue> byFilters(String name, String address, Long sportTypeId, StatusVenue status) {
 
-        return (root, query, criteriaBuilder) -> {
+        return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             query.distinct(true);
 
+            predicates.add(cb.isTrue(root.get("owner").get("enabled")));
+
             if (name != null && !name.isBlank()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")),
+                predicates.add(cb.like(cb.lower(root.get("name")),
                         "%" + name.trim().toLowerCase(Locale.ROOT) + "%"));
             }
 
             if (address != null && !address.isBlank()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("address")),
+                predicates.add(cb.like(cb.lower(root.get("address")),
                         "%" + address.trim().toLowerCase(Locale.ROOT) + "%"));
             }
 
@@ -42,14 +44,14 @@ public final class VenueSpecification {
 
                 Join<Court, SportType> sportTypeJoin = courtJoin.join("sportType", JoinType.LEFT);
 
-                predicates.add(criteriaBuilder.equal(sportTypeJoin.get("id"), sportTypeId));
+                predicates.add(cb.equal(sportTypeJoin.get("id"), sportTypeId));
             }
 
             if (status != null) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+                predicates.add(cb.equal(root.get("status"), status));
             }
 
-            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+            return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
 }

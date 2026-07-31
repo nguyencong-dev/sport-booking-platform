@@ -21,5 +21,5 @@ public interface BookingService {
 
     BookingResponse completeBooking(Long id);
 
-    List<BookingResponse> getAllBookings();
+    Page<BookingResponse> getAllBookings(String search, BookingStatus status, int page);
 }

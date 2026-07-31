@@ -3,6 +3,13 @@ import type {
   UpdateUserRequest,
   UserResponse,
 } from "@/types/auth";
+import type { PageResponse } from "@/types/pagination";
+
+type GetUsersParams = {
+  email?: string;
+  enabled?: boolean;
+  page?: number;
+};
 
 export const userService = {
   async getCurrentUser(): Promise<UserResponse> {
@@ -39,9 +46,18 @@ export const userService = {
     return response.data;
   },
 
-  async getAll(): Promise<UserResponse[]> {
-    const response =
-      await fieldmateClient.get<UserResponse[]>("/secure/users");
+  async getAll(
+    params: GetUsersParams = {},
+  ): Promise<PageResponse<UserResponse>> {
+    const response = await fieldmateClient.get<
+      PageResponse<UserResponse>
+    >("/secure/users", {
+      params: {
+        email: params.email?.trim() || undefined,
+        enabled: params.enabled,
+        page: params.page ?? 0,
+      },
+    });
 
     return response.data;
   },

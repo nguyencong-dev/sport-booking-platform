@@ -26,3 +26,24 @@ fieldmateClient.interceptors.request.use((config) => {
 
   return config;
 });
+
+fieldmateClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginRequest = error.config?.url === "/auth/login";
+
+    if (
+      typeof window !== "undefined" &&
+      error.response?.status === 401 &&
+      !isLoginRequest
+    ) {
+      cookies.remove("token", {
+        path: "/",
+      });
+
+      window.location.replace("/login");
+    }
+
+    return Promise.reject(error);
+  },
+);

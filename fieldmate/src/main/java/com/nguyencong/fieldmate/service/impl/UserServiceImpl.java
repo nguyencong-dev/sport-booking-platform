@@ -1,10 +1,12 @@
 package com.nguyencong.fieldmate.service.impl;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +19,10 @@ import com.nguyencong.fieldmate.exception.FileUploadException;
 import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
+import com.nguyencong.fieldmate.repository.spec.UserSpecification;
 import com.nguyencong.fieldmate.security.CurrentUserProvider;
 import com.nguyencong.fieldmate.service.UserService;
+import com.nguyencong.fieldmate.utils.PaginationUtils;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -67,8 +71,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAllByOrderByIdDesc().stream().map(UserMapper::toResponse).toList();
+    public Page<UserResponse> getAllUsers(String email, Boolean enabled, int page) {
+        Pageable pageable = PaginationUtils.createPageable(page);
+        String normalizedEmail = email == null || email.isBlank() ? null : email.trim();
+        Specification<User> specification = UserSpecification.byFilters(normalizedEmail, enabled);
+
+        return userRepository.findAll(specification, pageable).map(UserMapper::toResponse);
     }
 
     @Override

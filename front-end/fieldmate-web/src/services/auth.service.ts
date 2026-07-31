@@ -24,6 +24,7 @@ export const authService = {
     formData.append("phoneNumber", request.phoneNumber.trim());
     formData.append("firstName", request.firstName.trim());
     formData.append("lastName", request.lastName.trim());
+    formData.append("role", request.role);
 
     if (request.avatar) {
       formData.append("avatar", request.avatar);

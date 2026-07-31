@@ -4,6 +4,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  Building2,
   Eye,
   EyeOff,
   ImagePlus,
@@ -30,7 +31,10 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/services/auth.service";
-import type { AuthErrorResponse } from "@/types/auth";
+import type {
+  AuthErrorResponse,
+  RegistrationRole,
+} from "@/types/auth";
 
 export function RegisterScreen() {
   const router = useRouter();
@@ -41,6 +45,7 @@ export function RegisterScreen() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<RegistrationRole>("CUSTOMER");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -109,6 +114,7 @@ export function RegisterScreen() {
         phoneNumber,
         firstName,
         lastName,
+        role,
         avatar,
       });
 
@@ -149,6 +155,70 @@ export function RegisterScreen() {
 
             <CardContent className="mt-7 px-4 sm:px-6">
               <form onSubmit={handleSubmit} className="space-y-5">
+                <fieldset>
+                  <legend className="mb-3 text-sm font-bold text-slate-700">
+                    Bạn muốn sử dụng FieldMate để làm gì?
+                  </legend>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label
+                      className={`cursor-pointer rounded-2xl border p-4 transition ${role === "CUSTOMER" ? "border-[#ff174f] bg-rose-50 ring-2 ring-rose-100" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="CUSTOMER"
+                        checked={role === "CUSTOMER"}
+                        onChange={() => setRole("CUSTOMER")}
+                        disabled={submitting}
+                        className="sr-only"
+                      />
+
+                      <span className="flex items-start gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#ff174f] shadow-sm">
+                          <UserRound className="size-5" />
+                        </span>
+                        <span>
+                          <span className="block font-black text-[#073b77]">
+                            Tôi muốn đặt sân
+                          </span>
+                          <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                            Tìm kiếm, đặt lịch và thanh toán sân thể thao.
+                          </span>
+                        </span>
+                      </span>
+                    </label>
+
+                    <label
+                      className={`cursor-pointer rounded-2xl border p-4 transition ${role === "COURT_OWNER" ? "border-[#073b77] bg-blue-50 ring-2 ring-blue-100" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="role"
+                        value="COURT_OWNER"
+                        checked={role === "COURT_OWNER"}
+                        onChange={() => setRole("COURT_OWNER")}
+                        disabled={submitting}
+                        className="sr-only"
+                      />
+
+                      <span className="flex items-start gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#073b77] shadow-sm">
+                          <Building2 className="size-5" />
+                        </span>
+                        <span>
+                          <span className="block font-black text-[#073b77]">
+                            Tôi là chủ sân
+                          </span>
+                          <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                            Đăng sân, quản lý lịch đặt và tài khoản thanh toán.
+                          </span>
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <label

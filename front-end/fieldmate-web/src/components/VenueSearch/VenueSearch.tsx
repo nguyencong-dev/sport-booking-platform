@@ -187,7 +187,7 @@ export function VenueSearch({
           </SelectTrigger>
           <SelectContent align="start">
             {sportTypes.map((sportType) => (
-              <SelectItem key={sportType.id} value={String(sportType.id)}>
+              <SelectItem key={sportType.id} value={String(sportType.name)}>
                 {sportType.name}
               </SelectItem>
             ))}

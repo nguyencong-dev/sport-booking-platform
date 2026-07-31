@@ -7,12 +7,15 @@ export type AuthResponse = {
   token: string;
 };
 
+export type RegistrationRole = "CUSTOMER" | "COURT_OWNER";
+
 export type RegisterRequest = {
   email: string;
   password: string;
   phoneNumber: string;
   firstName: string;
   lastName: string;
+  role: RegistrationRole;
   avatar?: File | null;
 };
 

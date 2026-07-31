@@ -1,5 +1,6 @@
 package com.nguyencong.fieldmate.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,7 +12,8 @@ import com.nguyencong.fieldmate.repository.UserRepository;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;

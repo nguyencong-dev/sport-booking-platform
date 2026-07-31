@@ -16,6 +16,8 @@ import com.nguyencong.fieldmate.dto.request.RegisterRequest;
 import com.nguyencong.fieldmate.dto.response.AuthResponse;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.entity.enums.Role;
+import com.nguyencong.fieldmate.exception.BadRequestException;
 import com.nguyencong.fieldmate.exception.DuplicateResourceException;
 import com.nguyencong.fieldmate.mapper.UserMapper;
 import com.nguyencong.fieldmate.repository.UserRepository;
@@ -41,21 +43,26 @@ public class AuthServiceImpl implements AuthService {
             throw new DuplicateResourceException("Email đã được sử dụng");
         }
 
+        if (request.getRole() != Role.CUSTOMER && request.getRole() != Role.COURT_OWNER) {
+            throw new BadRequestException("Chỉ được đăng ký tài khoản khách hàng hoặc chủ sân");
+        }
+
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setPhoneNumber(request.getPhoneNumber());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        user.setRole(request.getRole());
 
         if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
             Map<?, ?> uploadResult = cloudinary.uploader().upload(request.getAvatar().getBytes(),
                     Map.of("folder", "fieldmate/avatars"));
-
             user.setAvatar((String) uploadResult.get("secure_url"));
         }
 
         User savedUser = userRepository.save(user);
+
         return UserMapper.toResponse(savedUser);
     }
 

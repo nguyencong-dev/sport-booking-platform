@@ -1,6 +1,7 @@
 import { fieldmateClient } from "@/services/clients/fieldmate-client";
 import type {
   MomoPaymentAccountRequest,
+  PaymentAccountStatus,
   PaymentAccountResponse,
   VnPayPaymentAccountRequest,
 } from "@/types/payment-account";
@@ -75,6 +76,32 @@ export const paymentAccountService = {
   async deactivate(accountId: number) {
     const response = await fieldmateClient.patch<PaymentAccountResponse>(
       `/secure/payment-accounts/${accountId}/inactive`,
+    );
+
+    return response.data;
+  },
+
+  async getAll(status?: PaymentAccountStatus) {
+    const response = await fieldmateClient.get<
+      PaymentAccountResponse[]
+    >("/secure/payment-accounts", {
+      params: {
+        status,
+      },
+    });
+
+    return response.data;
+  },
+
+  async updateStatus(
+    accountId: number,
+    status: PaymentAccountStatus,
+  ) {
+    const response = await fieldmateClient.patch<PaymentAccountResponse>(
+      `/secure/payment-accounts/${accountId}/status`,
+      {
+        status,
+      },
     );
 
     return response.data;

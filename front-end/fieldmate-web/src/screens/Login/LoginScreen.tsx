@@ -23,6 +23,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { authService } from "@/services/auth.service";
 import type { AuthErrorResponse } from "@/types/auth";
 
+function getHomePath(role: "CUSTOMER" | "COURT_OWNER" | "ADMIN") {
+  if (role === "ADMIN") {
+    return "/admin";
+  }
+
+  if (role === "COURT_OWNER") {
+    return "/my-venues";
+  }
+
+  return "/";
+}
+
 export function LoginScreen() {
   const router = useRouter();
   const { user, isAuthenticated, ready, signIn } = useAuth();
@@ -33,10 +45,8 @@ export function LoginScreen() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (ready && isAuthenticated) {
-      router.replace(
-        user?.role === "COURT_OWNER" ? "/my-venues" : "/",
-      );
+    if (ready && isAuthenticated && user) {
+      router.replace(getHomePath(user.role));
     }
   }, [isAuthenticated, ready, router, user]);
 
@@ -53,9 +63,7 @@ export function LoginScreen() {
       });
 
       const currentUser = await signIn(response.token);
-      router.replace(
-        currentUser.role === "COURT_OWNER" ? "/my-venues" : "/",
-      );
+      router.replace(getHomePath(currentUser.role));
       router.refresh();
     } catch (requestError) {
       if (axios.isAxiosError<AuthErrorResponse>(requestError)) {

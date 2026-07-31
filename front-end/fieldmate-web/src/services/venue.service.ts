@@ -95,6 +95,14 @@ export const venueService = {
     return response.data;
   },
 
+  async getPending() {
+    const response = await fieldmateClient.get<VenueSummaryResponse[]>(
+      "/secure/venues/pending",
+    );
+
+    return response.data;
+  },
+
   async create(data: VenueUpsertRequest) {
     const response = await fieldmateClient.post<VenueSummaryResponse>(
       "/secure/venues",

@@ -64,4 +64,12 @@ export const bookingService = {
 
     return response.data;
   },
+
+  async getAll(): Promise<BookingResponse[]> {
+    const response = await fieldmateClient.get<BookingResponse[]>(
+      "/secure/bookings",
+    );
+
+    return response.data;
+  },
 };

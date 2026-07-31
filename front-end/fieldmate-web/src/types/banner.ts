@@ -5,3 +5,8 @@ export type HeroBannerResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type HeroBannerRequest = {
+  image?: File | null;
+  targetUrl?: string;
+};

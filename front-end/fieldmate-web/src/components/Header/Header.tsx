@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
   CalendarDays,
@@ -11,6 +11,7 @@ import {
   LogOut,
   MapPin,
   Menu,
+  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
@@ -65,6 +66,14 @@ const courtOwnerNavigation = [
   },
 ];
 
+const adminNavigation = [
+  {
+    label: "Trang quản trị",
+    href: "/admin",
+    icon: ShieldCheck,
+  },
+];
+
 function Brand() {
   return (
     <img
@@ -76,6 +85,7 @@ function Brand() {
 }
 
 export function Header() {
+  const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, ready, signOut } = useAuth();
 
@@ -97,9 +107,15 @@ export function Header() {
   }
 
   const navigation =
-    user?.role === "COURT_OWNER"
+    user?.role === "ADMIN"
+      ? adminNavigation
+      : user?.role === "COURT_OWNER"
       ? courtOwnerNavigation
       : publicNavigation;
+
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 shadow-[0_4px_24px_rgba(15,23,42,0.04)] backdrop-blur-md">

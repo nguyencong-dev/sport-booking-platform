@@ -135,10 +135,8 @@ public class BookingServiceImpl implements BookingService {
 
         User customer = currentUserProvider.getCurrentUser();
 
-        return bookingRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId())
-                .stream()
-                .map(BookingMapper::toResponse)
-                .toList();
+        return bookingRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId()).stream()
+                .map(BookingMapper::toResponse).toList();
     }
 
     @Override

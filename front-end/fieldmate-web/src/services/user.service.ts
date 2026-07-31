@@ -38,4 +38,36 @@ export const userService = {
 
     return response.data;
   },
+
+  async getAll(): Promise<UserResponse[]> {
+    const response =
+      await fieldmateClient.get<UserResponse[]>("/secure/users");
+
+    return response.data;
+  },
+
+  async getById(userId: number): Promise<UserResponse> {
+    const response = await fieldmateClient.get<UserResponse>(
+      `/secure/users/${userId}`,
+    );
+
+    return response.data;
+  },
+
+  async updateEnabled(
+    userId: number,
+    enabled: boolean,
+  ): Promise<UserResponse> {
+    const response = await fieldmateClient.patch<UserResponse>(
+      `/secure/users/${userId}/enabled`,
+      undefined,
+      {
+        params: {
+          enabled,
+        },
+      },
+    );
+
+    return response.data;
+  },
 };

@@ -10,6 +10,8 @@ import lombok.Getter;
 @Getter
 @Configuration
 public class MomoConfig {
+    @Value("${payment-front-end-return-url}")
+    private String frontendReturnUrl;
 
     @Value("${momo.base-url}")
     private String baseUrl;

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nguyencong.fieldmate.config.MomoConfig;
 import com.nguyencong.fieldmate.config.VnPayConfig;
 import com.nguyencong.fieldmate.dto.request.MomoIpnRequest;
 import com.nguyencong.fieldmate.dto.request.PaymentRequest;
@@ -74,6 +75,8 @@ public class PaymentServiceImpl implements PaymentService {
     private CredentialEncryptionService credentialEncryptionService;
     @Autowired
     private VnPayConfig vnPayConfig;
+    @Autowired
+    private MomoConfig momoConfig;
 
     @Override
     @Transactional
@@ -482,23 +485,28 @@ public class PaymentServiceImpl implements PaymentService {
     public String handleVnPayReturn(Map<String, String> parameters) {
 
         String transactionCode = parameters.get("vnp_TxnRef");
-        Payment payment = transactionCode == null
-                ? null
+
+        Payment payment = transactionCode == null ? null
                 : paymentRepository.findByTransactionCode(transactionCode).orElse(null);
+
+        if (payment == null || payment.getPaymentMethod() != PaymentMethod.VNPAY) {
+            return UriComponentsBuilder
+                    .fromUriString(vnPayConfig.getFrontendReturnUrl())
+                    .queryParam("gateway", "vnpay")
+                    .queryParam("result", "invalid")
+                    .build()
+                    .encode()
+                    .toUriString();
+        }
 
         boolean signatureValid = false;
 
-        if (payment != null
-                && payment.getPaymentMethod() == PaymentMethod.VNPAY
-                && payment.getPaymentAccount() != null
-                && payment.getPaymentAccount().getProvider() == PaymentProvider.VNPAY) {
+        OwnerPaymentAccount paymentAccount = payment.getPaymentAccount();
 
-            VnPayCredential credential = vnPayCredentialRepository
-                    .findByPaymentAccount_Id(payment.getPaymentAccount().getId())
-                    .orElse(null);
+        if (paymentAccount != null && paymentAccount.getProvider() == PaymentProvider.VNPAY) {
+            VnPayCredential credential = vnPayCredentialRepository.findByPaymentAccount_Id(paymentAccount.getId()).orElse(null);
 
-            if (credential != null
-                    && credential.getTmnCode().trim().equals(parameters.get("vnp_TmnCode"))) {
+            if (credential != null && credential.getTmnCode().trim().equals(parameters.get("vnp_TmnCode"))) {
                 try {
                     String hashSecret = credentialEncryptionService.decrypt(credential.getHashSecret());
                     signatureValid = VnPayUtils.hasValidSignature(parameters, hashSecret);
@@ -508,17 +516,17 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        UriComponentsBuilder redirect = UriComponentsBuilder
+        return UriComponentsBuilder
                 .fromUriString(vnPayConfig.getFrontendReturnUrl())
+                .pathSegment(String.valueOf(payment.getBooking().getId()))
+                .queryParam("gateway", "vnpay")
+                .queryParam("paymentId", payment.getId())
                 .queryParam("transactionCode", transactionCode)
                 .queryParam("responseCode", parameters.get("vnp_ResponseCode"))
-                .queryParam("signatureValid", signatureValid);
-
-        if (payment != null) {
-            redirect.queryParam("paymentId", payment.getId());
-        }
-
-        return redirect.build().encode().toUriString();
+                .queryParam("signatureValid", signatureValid)
+                .build()
+                .encode()
+                .toUriString();
     }
 
     private boolean hasRequiredVnPayParameters(Map<String, String> parameters) {
@@ -570,5 +578,34 @@ public class PaymentServiceImpl implements PaymentService {
             case VNPAY -> PaymentProvider.VNPAY;
             case CASH -> throw new BadRequestException("Tiền mặt không sử dụng tài khoản thanh toán online");
         };
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String handleMomoReturn(Map<String, String> parameters) {
+
+        String orderId = parameters.get("orderId");
+
+        Payment payment = orderId == null ? null : paymentRepository.findByTransactionCode(orderId).orElse(null);
+
+        if (payment == null || payment.getPaymentMethod() != PaymentMethod.MOMO) {
+            return UriComponentsBuilder
+                    .fromUriString(momoConfig.getFrontendReturnUrl())
+                    .queryParam("gateway", "momo")
+                    .queryParam("result", "invalid")
+                    .build()
+                    .encode()
+                    .toUriString();
+        }
+
+        return UriComponentsBuilder
+                .fromUriString(momoConfig.getFrontendReturnUrl())
+                .pathSegment(String.valueOf(payment.getBooking().getId()))
+                .queryParam("gateway", "momo")
+                .queryParam("paymentId", payment.getId())
+                .queryParam("resultCode", parameters.get("resultCode"))
+                .build()
+                .encode()
+                .toUriString();
     }
 }

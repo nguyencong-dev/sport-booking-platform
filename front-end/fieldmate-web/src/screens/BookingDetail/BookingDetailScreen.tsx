@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   CircleAlert,
+  CircleCheck,
   Clock3,
   LoaderCircle,
   MapPin,
@@ -42,8 +43,14 @@ import type {
   PaymentType,
 } from "@/types/payment";
 
+type PaymentReturnContext = {
+  gateway: "momo" | "vnpay";
+  paymentId: number;
+};
+
 type BookingDetailScreenProps = {
   bookingId: number;
+  paymentReturn?: PaymentReturnContext | null;
 };
 
 type ApiErrorResponse = {
@@ -127,6 +134,9 @@ const paymentTypeLabels: Record<PaymentType, string> = {
   FULL_PAYMENT: "Thanh toán toàn bộ",
 };
 
+const PAYMENT_RETURN_POLL_INTERVAL = 1_500;
+const PAYMENT_RETURN_MAX_ATTEMPTS = 10;
+
 const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   style: "currency",
   currency: "VND",
@@ -153,6 +163,7 @@ function formatDateTime(value: string) {
 
 export function BookingDetailScreen({
   bookingId,
+  paymentReturn = null,
 }: BookingDetailScreenProps) {
   const router = useRouter();
   const { ready, isAuthenticated } = useAuth();
@@ -167,12 +178,115 @@ export function BookingDetailScreen({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [checkingReturnedPayment, setCheckingReturnedPayment] =
+    useState(false);
+  const [returnedPaymentStatus, setReturnedPaymentStatus] =
+    useState<PaymentStatus | null>(null);
+  const [returnedPaymentError, setReturnedPaymentError] =
+    useState("");
 
   useEffect(() => {
     if (ready && !isAuthenticated) {
       router.replace(`/login?redirect=/bookings/${bookingId}`);
     }
   }, [bookingId, isAuthenticated, ready, router]);
+
+  useEffect(() => {
+    if (
+      !ready ||
+      !isAuthenticated ||
+      !paymentReturn ||
+      !Number.isInteger(bookingId) ||
+      bookingId <= 0
+    ) {
+      return;
+    }
+
+    const currentPaymentReturn = paymentReturn;
+    let active = true;
+    let timeoutId: number | undefined;
+
+    async function pollReturnedPayment(attempt: number) {
+      try {
+        setCheckingReturnedPayment(true);
+        setReturnedPaymentError("");
+
+        const returnedPayment = await paymentService.getById(
+          currentPaymentReturn.paymentId,
+        );
+
+        if (!active) {
+          return;
+        }
+
+        if (returnedPayment.bookingId !== bookingId) {
+          setReturnedPaymentError(
+            "Giao dịch thanh toán không thuộc lịch đặt này.",
+          );
+          setCheckingReturnedPayment(false);
+          return;
+        }
+
+        const [bookingData, paymentData] = await Promise.all([
+          bookingService.getById(bookingId),
+          paymentService.getByBookingId(bookingId),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        setBooking(bookingData);
+        setPayments(paymentData);
+        setReturnedPaymentStatus(returnedPayment.status);
+        setPaymentType(
+          bookingData.paidAmount < bookingData.requiredDeposit
+            ? "DEPOSIT"
+            : "REMAINING",
+        );
+
+        if (
+          returnedPayment.status === "PENDING" &&
+          attempt < PAYMENT_RETURN_MAX_ATTEMPTS - 1
+        ) {
+          timeoutId = window.setTimeout(
+            () => void pollReturnedPayment(attempt + 1),
+            PAYMENT_RETURN_POLL_INTERVAL,
+          );
+          return;
+        }
+
+        setCheckingReturnedPayment(false);
+      } catch (requestError) {
+        if (!active) {
+          return;
+        }
+
+        if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
+          setReturnedPaymentError(
+            requestError.response?.data?.message ??
+              "Không thể kiểm tra kết quả thanh toán.",
+          );
+        } else {
+          setReturnedPaymentError(
+            "Không thể kiểm tra kết quả thanh toán.",
+          );
+        }
+
+        setCheckingReturnedPayment(false);
+      }
+    }
+
+    void pollReturnedPayment(0);
+
+    return () => {
+      active = false;
+
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [bookingId, isAuthenticated, paymentReturn, ready]);
 
   useEffect(() => {
     if (
@@ -378,6 +492,86 @@ export function BookingDetailScreen({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
+
+        {paymentReturn && returnedPaymentError && (
+          <Alert variant="destructive" className="mb-6">
+            <CircleAlert />
+            <AlertTitle>
+              Không thể kiểm tra thanh toán
+            </AlertTitle>
+            <AlertDescription>
+              {returnedPaymentError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {paymentReturn && checkingReturnedPayment && (
+          <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
+            <LoaderCircle className="animate-spin" />
+            <AlertTitle>Đang xác nhận thanh toán</AlertTitle>
+            <AlertDescription>
+              FieldMate đang chờ kết quả chính thức từ{" "}
+              {paymentReturn.gateway === "momo"
+                ? "MoMo"
+                : "VNPay"}
+              .
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {paymentReturn &&
+          !checkingReturnedPayment &&
+          returnedPaymentStatus === "PAID" && (
+            <Alert className="mb-6 border-emerald-200 bg-emerald-50 text-emerald-800">
+              <CircleCheck />
+              <AlertTitle>Thanh toán thành công</AlertTitle>
+              <AlertDescription>
+                Giao dịch đã được xác nhận và thông tin lịch
+                đặt đã được cập nhật.
+              </AlertDescription>
+            </Alert>
+          )}
+
+        {paymentReturn &&
+          !checkingReturnedPayment &&
+          (returnedPaymentStatus === "FAILED" ||
+            returnedPaymentStatus === "EXPIRED") && (
+            <Alert variant="destructive" className="mb-6">
+              <CircleAlert />
+              <AlertTitle>
+                Thanh toán không thành công
+              </AlertTitle>
+              <AlertDescription>
+                Giao dịch đã thất bại hoặc hết hạn. Bạn có thể
+                chọn phương thức thanh toán và thử lại.
+              </AlertDescription>
+            </Alert>
+          )}
+
+        {paymentReturn &&
+          !checkingReturnedPayment &&
+          returnedPaymentStatus === "PENDING" && (
+            <Alert className="mb-6 border-amber-200 bg-amber-50 text-amber-800">
+              <CircleAlert />
+              <AlertTitle>Giao dịch đang được xử lý</AlertTitle>
+              <AlertDescription>
+                FieldMate chưa nhận được kết quả cuối cùng. Vui
+                lòng tải lại trang sau ít phút.
+              </AlertDescription>
+            </Alert>
+          )}
+
+        {paymentReturn &&
+          !checkingReturnedPayment &&
+          returnedPaymentStatus === "REFUNDED" && (
+            <Alert className="mb-6 border-blue-200 bg-blue-50 text-blue-800">
+              <CircleAlert />
+              <AlertTitle>Giao dịch đã được hoàn tiền</AlertTitle>
+              <AlertDescription>
+                Khoản thanh toán này đã được hoàn lại.
+              </AlertDescription>
+            </Alert>
+          )}
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-6">

@@ -69,9 +69,16 @@ public class ApiPaymentController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @GetMapping("/payments/momo/return")
+    public ResponseEntity<Void> handleMomoReturn(@RequestParam Map<String, String> parameters) {
+
+        URI redirectUrl = URI.create(this.paymentService.handleMomoReturn(parameters));
+
+        return ResponseEntity.status(HttpStatus.FOUND).location(redirectUrl).build();
+    }
+
     @GetMapping("/payments/vnpay/ipn")
-    public ResponseEntity<VnPayIpnResponse> handleVnPayIpn(
-            @RequestParam Map<String, String> parameters) {
+    public ResponseEntity<VnPayIpnResponse> handleVnPayIpn(@RequestParam Map<String, String> parameters) {
 
         return new ResponseEntity<>(this.paymentService.handleVnPayIpn(parameters), HttpStatus.OK);
     }

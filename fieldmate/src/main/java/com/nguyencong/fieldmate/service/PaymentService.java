@@ -22,5 +22,7 @@ public interface PaymentService {
 
     String handleVnPayReturn(Map<String, String> parameters);
 
+    String handleMomoReturn(Map<String, String> parameters);
+
     PaymentResponse receiveRemainingCashPayment(Long bookingId);
 }

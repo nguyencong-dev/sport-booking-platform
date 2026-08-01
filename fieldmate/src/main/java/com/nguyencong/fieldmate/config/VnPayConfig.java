@@ -15,7 +15,7 @@ public class VnPayConfig {
     @Value("${vnpay.return-url}")
     private String returnUrl;
 
-    @Value("${vnpay.frontend-return-url}")
+    @Value("${payment-front-end-return-url}")
     private String frontendReturnUrl;
 
     @Value("${vnpay.ipn-url}")

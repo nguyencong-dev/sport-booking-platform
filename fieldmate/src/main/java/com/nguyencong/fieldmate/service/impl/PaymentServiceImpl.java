@@ -275,10 +275,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private String generateTransactionCode() {
 
-        return "PAY_" + UUID.randomUUID()
-                .toString()
-                .replace("-", "")
-                .toUpperCase();
+        return "PAY_" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
     }
 
     @Override
@@ -483,28 +480,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional(readOnly = true)
     public String handleVnPayReturn(Map<String, String> parameters) {
-
         String transactionCode = parameters.get("vnp_TxnRef");
-
         Payment payment = transactionCode == null ? null
                 : paymentRepository.findByTransactionCode(transactionCode).orElse(null);
 
         if (payment == null || payment.getPaymentMethod() != PaymentMethod.VNPAY) {
-            return UriComponentsBuilder
-                    .fromUriString(vnPayConfig.getFrontendReturnUrl())
-                    .queryParam("gateway", "vnpay")
-                    .queryParam("result", "invalid")
-                    .build()
-                    .encode()
-                    .toUriString();
+            return UriComponentsBuilder.fromUriString(vnPayConfig.getFrontendReturnUrl()).queryParam("gateway", "vnpay")
+                    .queryParam("result", "invalid").build().encode().toUriString();
         }
 
         boolean signatureValid = false;
-
         OwnerPaymentAccount paymentAccount = payment.getPaymentAccount();
 
         if (paymentAccount != null && paymentAccount.getProvider() == PaymentProvider.VNPAY) {
-            VnPayCredential credential = vnPayCredentialRepository.findByPaymentAccount_Id(paymentAccount.getId()).orElse(null);
+            VnPayCredential credential = vnPayCredentialRepository.findByPaymentAccount_Id(paymentAccount.getId())
+                    .orElse(null);
 
             if (credential != null && credential.getTmnCode().trim().equals(parameters.get("vnp_TmnCode"))) {
                 try {
@@ -516,17 +506,15 @@ public class PaymentServiceImpl implements PaymentService {
             }
         }
 
-        return UriComponentsBuilder
-                .fromUriString(vnPayConfig.getFrontendReturnUrl())
-                .pathSegment(String.valueOf(payment.getBooking().getId()))
-                .queryParam("gateway", "vnpay")
-                .queryParam("paymentId", payment.getId())
-                .queryParam("transactionCode", transactionCode)
-                .queryParam("responseCode", parameters.get("vnp_ResponseCode"))
-                .queryParam("signatureValid", signatureValid)
-                .build()
-                .encode()
-                .toUriString();
+        if (!signatureValid) {
+            return UriComponentsBuilder.fromUriString(vnPayConfig.getFrontendReturnUrl()).queryParam("gateway", "vnpay")
+                    .queryParam("result", "invalid").build().encode().toUriString();
+        }
+
+        return UriComponentsBuilder.fromUriString(vnPayConfig.getFrontendReturnUrl())
+                .pathSegment(String.valueOf(payment.getBooking().getId())).queryParam("gateway", "vnpay")
+                .queryParam("paymentId", payment.getId()).queryParam("resultCode", parameters.get("vnp_ResponseCode"))
+                .build().encode().toUriString();
     }
 
     private boolean hasRequiredVnPayParameters(Map<String, String> parameters) {

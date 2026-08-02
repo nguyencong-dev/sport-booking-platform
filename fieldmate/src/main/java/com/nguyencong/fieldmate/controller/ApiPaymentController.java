@@ -84,13 +84,10 @@ public class ApiPaymentController {
     }
 
     @GetMapping("/payments/vnpay/return")
-    public ResponseEntity<Void> handleVnPayReturn(
-            @RequestParam Map<String, String> parameters) {
+    public ResponseEntity<Void> handleVnPayReturn(@RequestParam Map<String, String> parameters) {
 
         URI redirectUrl = URI.create(this.paymentService.handleVnPayReturn(parameters));
 
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(redirectUrl)
-                .build();
+        return ResponseEntity.status(HttpStatus.FOUND).location(redirectUrl).build();
     }
 }

@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./fieldmate
+
+    env_file:
+      - ./fieldmate/.env
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ai-service:
+    build: ./ai-service
+
+    env_file:
+      - ./ai-service/.env
+
+    environment:
+      DATABASE_URL: postgresql+psycopg://${DB_USER}:${DB_PASS}@postgres:5432/${DB_NAME}
+      DATABASE_SCHEMA: ai
+      FIELDMATE_API_BASE_URL: http://backend:8080
+      DOCUMENT_STORAGE_DIR: /app/data/documents
+
+    command: >
+      sh -c "alembic upgrade head &&
+      exec uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ai_documents:/app/data/documents
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  ai_documents:

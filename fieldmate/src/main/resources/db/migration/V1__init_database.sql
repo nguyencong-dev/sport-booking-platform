@@ -436,10 +436,10 @@ SELECT account.id, seed.partner_code, seed.access_key, seed.secret_key,
        account.created_at, account.created_at
 FROM (
     VALUES
-        ('owner1@fieldmate.local', 'DEV_MOMO_OWNER_1', 'v1:1buvFS9A9+rYdDfB269B8BdjEdwBCTxV+ls55Z2XlyhXYHixmY7zrDTVvoe9o9Jm0AaB', 'v1:y0ti0ZbLNAePnRhuSqhO1qo294dMSBzHmnElTYbdW4rFSmhnsE2Cq42FuOyX5M9U9IwI'),
-        ('owner2@fieldmate.local', 'DEV_MOMO_OWNER_2', 'v1:483OWhsmNBg1rFrydDFjpj9FA3iSZv7SHAnXWmIj4t8TMQ2Mdfy3omat1rLWa2x5uND4', 'v1:X4vC3uRX6RpiYohWEBuodpp8HtcVgzbJeFtZFieK+UnsjM6f8OLw5wmrwcgAblvlrich'),
-        ('owner3@fieldmate.local', 'DEV_MOMO_OWNER_3', 'v1:4nsZhSee2E79UyIBJyasqTg7FHlb/RkzbEZwEhikZB6NVwPKP/CD6MQOzdYRY24FiyKt', 'v1:ZNWybA/gz7uGVQ2vqX9SI1VXf7iHdCjBw/iF3YkWIw93YiEbX5+Ki/z9zOT16et45OeM'),
-        ('owner4@fieldmate.local', 'DEV_MOMO_OWNER_4', 'v1:+uVXtMcve+x5dz0cpjzIk3E1MpLcCfcChEAz9MyZ/a2S5UXdStn9CUJngSTkhQYu3bnp', 'v1:IM4xIWLm5jt82QvezvFuFrypoYXIwnq39SFKDIMBs3zC+iSyKd2gBJWdB/Ajf+ad0X4u')
+        ('owner1@fieldmate.local', '  MOMO', 'v1:34odNprMN9x4Kwr799irAP0Ap8IxhW5bubZT5jRUmlSoBa7/F4D2hEw=', 'v1:a7Z7lrp1Y1jt7wIjUunrdrcCY6nThM5osjOgdRm92kcE64Omv7RYyhkcyW5cASOe0EeLIO+yN8xiaey1'),
+        ('owner2@fieldmate.local', ' MOMO', 'v1:34odNprMN9x4Kwr799irAP0Ap8IxhW5bubZT5jRUmlSoBa7/F4D2hEw=', 'v1:a7Z7lrp1Y1jt7wIjUunrdrcCY6nThM5osjOgdRm92kcE64Omv7RYyhkcyW5cASOe0EeLIO+yN8xiaey1'),
+        ('owner3@fieldmate.local', 'MOMO ', 'v1:34odNprMN9x4Kwr799irAP0Ap8IxhW5bubZT5jRUmlSoBa7/F4D2hEw=', 'v1:a7Z7lrp1Y1jt7wIjUunrdrcCY6nThM5osjOgdRm92kcE64Omv7RYyhkcyW5cASOe0EeLIO+yN8xiaey1'),
+        ('owner4@fieldmate.local', ' MOMO ', 'v1:34odNprMN9x4Kwr799irAP0Ap8IxhW5bubZT5jRUmlSoBa7/F4D2hEw=', 'v1:a7Z7lrp1Y1jt7wIjUunrdrcCY6nThM5osjOgdRm92kcE64Omv7RYyhkcyW5cASOe0EeLIO+yN8xiaey1')
 ) AS seed(owner_email, partner_code, access_key, secret_key)
 JOIN users owner ON owner.email = seed.owner_email
 JOIN owner_payment_accounts account
@@ -452,10 +452,10 @@ SELECT account.id, seed.tmn_code, seed.hash_secret,
        account.created_at, account.created_at
 FROM (
     VALUES
-        ('owner1@fieldmate.local', 'DEVVNP01', 'v1:xVlVkqyikJ4OyonlqNHPVYqabhBnOAtRWvZYSMUDd0NJ6Q+OMjYhLlCKbHjpfmT3row='),
-        ('owner2@fieldmate.local', 'DEVVNP02', 'v1:NckfTQLgBWSPrkDRaSfiltNX86tCTSGd0OFhvSXfC/z8WBY1nv++CjOEO7xXaQgF2kA='),
-        ('owner3@fieldmate.local', 'DEVVNP03', 'v1:xGkHRmRKdqlxvZ1/Jwk6IFT3Grc31Dc6LGe+RvZ1t8lRbefqrl+DH2g+4xi9+3TxVq4='),
-        ('owner4@fieldmate.local', 'DEVVNP04', 'v1:mlMFTlyc/EX0sRIOPJHEQucLud/XWis/ZQYECK0kEN5lvqW+MXoy0UDq9zDqMmr+yXw=')
+        ('owner1@fieldmate.local', '   ZTAY1P26  ', 'v1:SSC+6fi7azFrPHs6DB3cftHUk0IRiXglCvmGPPIzyWzdThJg3GMIG8HGOFbrgPG/4cUjUnQ81HvIhYiS'),
+        ('owner2@fieldmate.local', ' ZTAY1P26     ', 'v1:SSC+6fi7azFrPHs6DB3cftHUk0IRiXglCvmGPPIzyWzdThJg3GMIG8HGOFbrgPG/4cUjUnQ81HvIhYiS'),
+        ('owner3@fieldmate.local', 'ZTAY1P26  ', 'v1:SSC+6fi7azFrPHs6DB3cftHUk0IRiXglCvmGPPIzyWzdThJg3GMIG8HGOFbrgPG/4cUjUnQ81HvIhYiS'),
+        ('owner4@fieldmate.local', 'ZTAY1P26 ', 'v1:SSC+6fi7azFrPHs6DB3cftHUk0IRiXglCvmGPPIzyWzdThJg3GMIG8HGOFbrgPG/4cUjUnQ81HvIhYiS')
 ) AS seed(owner_email, tmn_code, hash_secret)
 JOIN users owner ON owner.email = seed.owner_email
 JOIN owner_payment_accounts account

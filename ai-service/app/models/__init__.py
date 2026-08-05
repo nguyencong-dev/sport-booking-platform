@@ -5,11 +5,4 @@ from app.models.knowledge_document import KnowledgeDocument
 from app.models.message import Message
 from app.models.message_source import MessageSource
 
-__all__ = [
-    "KnowledgeDocument",
-    "KnowledgeChunk",
-    "IngestionJob",
-    "Conversation",
-    "Message",
-    "MessageSource",
-]
+__all__ = ["KnowledgeDocument", "KnowledgeChunk", "IngestionJob", "Conversation", "Message", "MessageSource"]

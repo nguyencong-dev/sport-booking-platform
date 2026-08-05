@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.models.enums import (DocumentStatus,IngestionJobStatus)
+from app.models.enums import DocumentStatus, IngestionJobStatus
 
 
 class DocumentUploadResponse(BaseModel):

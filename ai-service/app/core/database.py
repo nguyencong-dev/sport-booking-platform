@@ -3,7 +3,6 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import settings
 
-
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -14,23 +13,14 @@ NAMING_CONVENTION = {
 
 
 class Base(DeclarativeBase):
-    metadata = MetaData(
-        schema=settings.database_schema,
-        naming_convention=NAMING_CONVENTION,
-    )
+    metadata = MetaData(schema=settings.database_schema, naming_convention=NAMING_CONVENTION)
 
 
-engine = create_engine(
-    settings.database_url.get_secret_value(),
-    pool_pre_ping=True,
-)
+engine = create_engine(settings.database_url.get_secret_value(), pool_pre_ping=True)
 
 
-SessionLocal = sessionmaker(
-    bind=engine,
-    autoflush=False,
-    expire_on_commit=False,
-)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
 
 def get_db():
     db = SessionLocal()

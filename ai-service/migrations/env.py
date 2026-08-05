@@ -31,12 +31,7 @@ database_url = settings.database_url.get_secret_value()
 # ... etc.
 
 
-
-def include_name(
-    name: str | None,
-    type_: str,
-    parent_names: dict[str, str | None],
-) -> bool:
+def include_name(name: str | None, type_: str, parent_names: dict[str, str | None]) -> bool:
     if type_ == "schema":
         return name == database_schema
 
@@ -59,21 +54,14 @@ def configure_context(**kwargs) -> None:
 
 
 def run_migrations_offline() -> None:
-    configure_context(
-        url=database_url,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
+    configure_context(url=database_url, literal_binds=True, dialect_opts={"paramstyle": "named"})
 
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    connectable = create_engine(
-        database_url,
-        poolclass=pool.NullPool,
-    )
+    connectable = create_engine(database_url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
         configure_context(connection=connection)

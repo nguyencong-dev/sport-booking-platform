@@ -31,36 +31,20 @@ class StoredPDF:
 class FileStorageService:
     READ_SIZE = 1024 * 1024
 
-    def save_pdf(
-        self,
-        upload: UploadFile,
-    ) -> StoredPDF:
-        original_filename = Path(
-            upload.filename or ""
-        ).name
+    def save_pdf(self, upload: UploadFile) -> StoredPDF:
+        original_filename = Path(upload.filename or "").name
 
         if not original_filename:
-            raise PDFUploadError(
-                "Tên file không hợp lệ"
-            )
+            raise PDFUploadError("Tên file không hợp lệ")
 
         if Path(original_filename).suffix.lower() != ".pdf":
-            raise UnsupportedPDFError(
-                "Chỉ chấp nhận file PDF"
-            )
+            raise UnsupportedPDFError("Chỉ chấp nhận file PDF")
 
         if upload.content_type != "application/pdf":
-            raise UnsupportedPDFError(
-                "Content-Type phải là application/pdf"
-            )
+            raise UnsupportedPDFError("Content-Type phải là application/pdf")
 
-        storage_dir = (
-            settings.document_storage_dir.resolve()
-        )
-        storage_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        storage_dir = settings.document_storage_dir.resolve()
+        storage_dir.mkdir(parents=True, exist_ok=True)
 
         stored_filename = f"{uuid.uuid4().hex}.pdf"
         destination = storage_dir / stored_filename
@@ -72,15 +56,11 @@ class FileStorageService:
 
         try:
             with destination.open("wb") as output:
-                while chunk := upload.file.read(
-                    self.READ_SIZE
-                ):
+                while chunk := upload.file.read(self.READ_SIZE):
                     total_size += len(chunk)
 
                     if total_size > max_size:
-                        raise PDFTooLargeError(
-                            "File PDF vượt quá kích thước cho phép"
-                        )
+                        raise PDFTooLargeError("File PDF vượt quá kích thước cho phép")
 
                     if len(header) < 1024:
                         remaining = 1024 - len(header)
@@ -90,24 +70,15 @@ class FileStorageService:
                     output.write(chunk)
 
             if total_size == 0:
-                raise PDFUploadError(
-                    "File PDF rỗng"
-                )
+                raise PDFUploadError("File PDF rỗng")
 
             if b"%PDF-" not in header:
-                raise UnsupportedPDFError(
-                    "Nội dung file không phải PDF hợp lệ"
-                )
+                raise UnsupportedPDFError("Nội dung file không phải PDF hợp lệ")
 
             return StoredPDF(
-                path=destination,
-                original_filename=original_filename,
-                checksum=checksum.hexdigest(),
-                size=total_size,
+                path=destination, original_filename=original_filename, checksum=checksum.hexdigest(), size=total_size
             )
 
         except Exception:
-            destination.unlink(
-                missing_ok=True,
-            )
+            destination.unlink(missing_ok=True)
             raise

@@ -36,8 +36,8 @@ class VenueSummaryResponse(FieldMateSchema):
     status: str
 
 class VenueDetailResponse(VenueSummaryResponse):
-    owner_id: int
-    owner_name: str
+    owner_id: int | None
+    owner_name: str | None
     benefits: list[BenefitResponse]
     rules: list[RuleResponse]
     images: list[VenueImageResponse]
@@ -49,8 +49,8 @@ class CourtResponse(FieldMateSchema):
     name: str
     price_per_hour: Decimal
     status: str
-    sport_type_name: str
-    venue_name: str
+    sport_type_name: str | None
+    venue_name: str | None
     created_at: datetime
     updated_at: datetime | None
 
@@ -64,10 +64,15 @@ class CourtBookingScheduleResponse(FieldMateSchema):
     court_name: str
     booked_periods: list[BookedPeriodResponse]
 
+
 class VenueBookingScheduleResponse(FieldMateSchema):
     venue_id: int
     date: date
     courts: list[CourtBookingScheduleResponse]
+
+class VenueInformationResponse(FieldMateSchema):
+    venue: VenueDetailResponse
+    courts: list[CourtResponse]
 
 T = TypeVar("T")
 

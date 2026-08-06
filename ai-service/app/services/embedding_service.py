@@ -16,3 +16,6 @@ class EmbeddingService:
             return []
 
         return self.client.embed_documents(contents)
+
+    def embed_query(self, query: str) -> list[float]:
+        return self.client.embed_query(query)

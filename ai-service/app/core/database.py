@@ -1,6 +1,5 @@
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-
 from app.core.config import settings
 
 NAMING_CONVENTION = {
@@ -11,20 +10,14 @@ NAMING_CONVENTION = {
     "pk": "pk_%(table_name)s",
 }
 
-
 class Base(DeclarativeBase):
     metadata = MetaData(schema=settings.database_schema, naming_convention=NAMING_CONVENTION)
 
-
 engine = create_engine(settings.database_url.get_secret_value(), pool_pre_ping=True)
-
-
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     except Exception:

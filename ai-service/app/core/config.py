@@ -29,11 +29,12 @@ class Settings(BaseSettings):
 
     rag_chunk_size: int = Field(default=800, gt=0)
     rag_chunk_overlap: int = Field(default=120, ge=0)
-    rag_top_k: int = Field(default=6, gt=0)
-    rag_similarity_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
+    rag_top_k: int = Field(default=20, gt=0)
+    rag_final_top_k: int = Field(default=6, gt=0)
+    rag_similarity_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
 
     document_storage_dir: Path = Path("./data/documents")
-    max_pdf_size_mb: int = Field(default=20, gt=0)
+    max_pdf_size_mb: int = Field(default=30, gt=0)
 
     langsmith_tracing: bool = False
     langsmith_api_key: SecretStr | None = None
@@ -42,9 +43,14 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_rag_settings(self) -> "Settings":
         if self.rag_chunk_overlap >= self.rag_chunk_size:
-            raise ValueError("RAG_CHUNK_OVERLAP phải nhỏ hơn RAG_CHUNK_SIZE")
+            raise ValueError(
+                "RAG_CHUNK_OVERLAP phải nhỏ hơn RAG_CHUNK_SIZE"
+            )
+        if self.rag_final_top_k > self.rag_top_k:
+            raise ValueError(
+                "RAG_FINAL_TOP_K không được lớn hơn RAG_TOP_K"
+            )
         return self
-
 
 @lru_cache
 def get_settings() -> Settings:

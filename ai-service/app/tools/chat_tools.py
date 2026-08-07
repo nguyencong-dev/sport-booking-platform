@@ -1,3 +1,6 @@
+from app.core.config import settings
+from app.services.rag_query_planner import  RagQueryPlanner, rag_query_planner
+from app.services.rag_reranking_service import RagRerankingService, rag_reranking_service
 import json
 from pydantic import BaseModel, Field
 from datetime import date
@@ -26,9 +29,15 @@ class GetVenueScheduleInput(BaseModel):
     booking_date: date = Field()
 
 class ChatToolFactory:
-    def __init__(self, retrieval: RetrievalService | None = None, fieldmate_query: FieldMateQueryService | None = None):
+    def __init__(self, retrieval: RetrievalService | None = None, fieldmate_query: FieldMateQueryService | None = None,
+        query_planner: RagQueryPlanner | None = None, reranker: RagRerankingService | None = None,) -> None:
         self.retrieval = retrieval or retrieval_service
-        self.fieldmate_query = fieldmate_query or fieldmate_query_service
+        self.fieldmate_query = (
+            fieldmate_query or fieldmate_query_service
+        )
+        self.query_planner = query_planner or rag_query_planner
+        self.reranker = reranker or rag_reranking_service
+
         self._used_chunks: dict[int, RetrievedChunkResponse] = {}
 
     @property
@@ -37,17 +46,74 @@ class ChatToolFactory:
 
     def build(self) -> list[BaseTool]:
         @tool(args_schema=SearchPdfKnowledgeInput)
-        def search_pdf_knowledge(query: str) -> str:
-            """Tìm nội dung liên quan trong tài liệu PDF."""
-            db = SessionLocal()
-            try:
-                chunks = self.retrieval.search(db, query=query)
-                for chunk in chunks:
-                    self._used_chunks[chunk.chunk_id] = chunk
+        async def search_pdf_knowledge(query: str) -> str:
+            """
+            Tìm kiến thức thể thao trong PDF.
 
-                return json.dumps([chunk.model_dump(mode="json") for chunk in chunks], ensure_ascii=False)
+            Chỉ sử dụng cho câu hỏi về thể thao, hoạt động thể lực,
+            chế độ tập luyện, kỹ thuật, luật chơi và an toàn vận động.
+            """
+
+            query_plan = await self.query_planner.plan(query)
+
+            if not query_plan.in_scope:
+                return json.dumps(
+                    {
+                        "message": (
+                            "Câu hỏi nằm ngoài phạm vi kho tài liệu "
+                            "thể thao FieldMate."
+                        ),
+                        "search_query": "",
+                        "chunks": [],
+                    },
+                    ensure_ascii=False,
+                )
+
+            db = SessionLocal()
+
+            try:
+                candidate_chunks = self.retrieval.search(
+                    db,
+                    query=query_plan.search_query,
+                    top_k=settings.rag_top_k,
+                    similarity_threshold=(settings.rag_similarity_threshold),
+                )
             finally:
                 db.close()
+
+            selected_chunks = await self.reranker.rerank(
+                query=query_plan.search_query,
+                chunks=candidate_chunks,
+                limit=settings.rag_final_top_k,
+            )
+
+            for chunk in selected_chunks:
+                self._used_chunks[chunk.chunk_id] = chunk
+
+            if not selected_chunks:
+                return json.dumps(
+                    {
+                        "message": (
+                            "Không tìm thấy nội dung đủ liên quan "
+                            "trong kho tài liệu."
+                        ),
+                        "search_query": query_plan.search_query,
+                        "chunks": [],
+                    },
+                    ensure_ascii=False,
+                )
+
+            return json.dumps(
+                {
+                    "message": "Đã tìm thấy nội dung liên quan.",
+                    "search_query": query_plan.search_query,
+                    "chunks": [
+                        chunk.model_dump(mode="json")
+                        for chunk in selected_chunks
+                    ],
+                },
+                ensure_ascii=False,
+            )
 
         @tool
         async def get_sport_types() -> str:

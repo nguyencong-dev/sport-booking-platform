@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RetrievedChunkResponse(BaseModel):
@@ -12,3 +12,11 @@ class RetrievedChunkResponse(BaseModel):
     page_number: int | None
     similarity: float
     extra_metadata: dict[str, Any]
+
+class RagQueryPlan(BaseModel):
+    in_scope: bool
+    search_query: str = ""
+
+
+class RagRerankSelection(BaseModel):
+    selected_chunk_ids: list[int] = Field(default_factory=list)

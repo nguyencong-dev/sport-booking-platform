@@ -1,18 +1,25 @@
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
-
+from app.repositories.knowledge_chunk_repository import KnowledgeChunkRepository
 from app.models.ingestion_job import IngestionJob
 from app.models.knowledge_document import KnowledgeDocument
 from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.repositories.knowledge_document_repository import KnowledgeDocumentRepository
 from app.services.file_storage_service import FileStorageService
+from app.models.enums import DocumentStatus
 
+class DocumentProcessingError(RuntimeError):
+    pass
+
+class DocumentNotFoundError(LookupError):
+    pass
 
 class DocumentService:
     def __init__(self) -> None:
         self.file_storage = FileStorageService()
         self.document_repository = KnowledgeDocumentRepository()
         self.job_repository = IngestionJobRepository()
+        self.chunk_repository = KnowledgeChunkRepository()
 
     def upload_pdf(
         self, db: Session, *, upload: UploadFile, title: str | None
@@ -39,4 +46,29 @@ class DocumentService:
         except Exception:
             db.rollback()
             stored_pdf.path.unlink(missing_ok=True)
+            raise
+
+    def get_documents(self, db: Session) -> list[KnowledgeDocument]:
+        return self.document_repository.get_all(db)
+
+    def get_document_detail(self, db: Session, document_id: int) -> tuple[KnowledgeDocument, IngestionJob | None, int]:
+        document = self.document_repository.get_by_id(db, document_id)
+        if document is None:
+            raise DocumentNotFoundError(f"Không tìm thấy tài liệu có id {document_id}")
+
+        latest_job = self.job_repository.get_latest_by_document_id(db, document_id)
+        chunk_count = self.chunk_repository.count_by_document_id(db, document_id)
+        return document, latest_job, chunk_count
+
+    def delete_document(self, db: Session, document_id: int) -> None:
+        document = self.document_repository.get_by_id(db, document_id)
+        if document is None:
+            raise DocumentNotFoundError(f"Không tìm thấy tài liệu có id {document_id}")
+        if document.status in {DocumentStatus.PENDING, DocumentStatus.PROCESSING}:
+            raise DocumentProcessingError("Không thể xóa tài liệu đang chờ hoặc đang được xử lý")
+        try:
+            self.document_repository.archive(db, document)
+            db.commit()
+        except Exception:
+            db.rollback()
             raise

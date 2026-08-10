@@ -1,6 +1,5 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, func
 from sqlalchemy.orm import Session
-
 from app.models.knowledge_chunk import KnowledgeChunk
 from app.models.enums import DocumentStatus
 from app.models.knowledge_document import KnowledgeDocument
@@ -42,3 +41,7 @@ class KnowledgeChunkRepository:
             )
             for chunk, document_title, similarity in rows
         ]
+
+    def count_by_document_id( self,db: Session,document_id: int) -> int:
+        statement = select(func.count(KnowledgeChunk.id)).where(KnowledgeChunk.document_id == document_id)
+        return db.scalar(statement) or 0

@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-
 from app.models.enums import DocumentStatus
 from app.models.knowledge_document import KnowledgeDocument
-
+from sqlalchemy import select
 
 class KnowledgeDocumentRepository:
     def create_pdf(
@@ -25,3 +24,12 @@ class KnowledgeDocumentRepository:
 
     def get_by_id(self, db: Session, document_id: int) -> KnowledgeDocument | None:
         return db.get(KnowledgeDocument, document_id)
+
+    def get_all(self, db: Session) -> list[KnowledgeDocument]:
+        statement = select(KnowledgeDocument).order_by(KnowledgeDocument.created_at.desc())
+        return list(db.scalars(statement).all())
+
+    def archive(self, db: Session, document: KnowledgeDocument) -> None:
+        document.status = DocumentStatus.ARCHIVED
+        document.is_active = False
+        db.flush()

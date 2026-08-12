@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
+from app.models.enums import MessageRole
 
 class ChatRequest(BaseModel):
     conversation_id: int | None = Field(default=None, gt = 0)
@@ -18,3 +19,16 @@ class ChatResponse(BaseModel):
     assistant_message_id: int
     answer: str
     sources: list[ChatSourceResponse]
+
+class ConversationListItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+class ConversationMessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    role: MessageRole
+    content: str
+    created_at: datetime

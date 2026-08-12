@@ -35,4 +35,4 @@ class DocumentDetailResponse(DocumentListItemResponse):
     description: str | None
     updated_at: datetime
     chunk_count: int
-    latest_job: IngestionJobDetailResponse | None
+    ingestion_jobs: list[IngestionJobDetailResponse]

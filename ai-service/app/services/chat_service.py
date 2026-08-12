@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.agents.chat_agent import ChatAgent, chat_agent
 from app.models.conversation import Conversation
 from app.models.enums import MessageRole
+from app.models.message import Message
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
 from app.repositories.message_source_repository import MessageSourceRepository
@@ -70,5 +71,15 @@ class ChatService:
             raise ConversationNotFoundError("Không tìm thấy cuộc hội thoại hoặc bạn không có quyền truy cập")
 
         return conversation
+
+    def get_conversations(self, db: Session, current_user: CurrentUser) -> list[Conversation]:
+        return self.conversation_repository.get_all_by_user_subject(db, str(current_user.id))
+
+    def get_conversation_messages(self, db: Session, current_user: CurrentUser, conversation_id: int) -> list[Message]:
+        conversation = self.conversation_repository.get_by_id_and_user_subject(db, conversation_id=conversation_id, user_subject=str(current_user.id))
+        if conversation is None:
+            raise ConversationNotFoundError("Không tìm thấy cuộc hội thoại hoặc bạn không có quyền truy cập")
+
+        return self.message_repository.get_all_by_conversation_id(db, conversation_id)
 
 chat_service = ChatService()

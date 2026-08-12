@@ -16,3 +16,8 @@ class ConversationRepository:
 
     def touch(self, conversation: Conversation) -> None:
         conversation.updated_at = datetime.now(timezone.utc)
+
+    def get_all_by_user_subject(self, db: Session, user_subject: str) -> list[Conversation]:
+        statement = (select(Conversation).where(Conversation.user_subject == user_subject)
+                    .order_by(Conversation.updated_at.desc(), Conversation.id.desc()))
+        return list(db.scalars(statement).all())

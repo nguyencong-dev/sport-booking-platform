@@ -22,6 +22,16 @@ class KnowledgeDocumentRepository:
 
         return document
 
+    def get_by_checksum(self, db: Session, checksum: str) -> KnowledgeDocument | None:
+        statement = (select(KnowledgeDocument).where(KnowledgeDocument.checksum == checksum)
+                    .order_by(KnowledgeDocument.is_active.desc(), KnowledgeDocument.id.desc()).limit(1))
+        return db.scalar(statement)
+
+    def mark_pending(self, db: Session, document: KnowledgeDocument) -> None:
+        document.status = DocumentStatus.PENDING
+        document.is_active = False
+        db.flush()
+        
     def get_by_id(self, db: Session, document_id: int) -> KnowledgeDocument | None:
         return db.get(KnowledgeDocument, document_id)
 
@@ -32,4 +42,13 @@ class KnowledgeDocumentRepository:
     def archive(self, db: Session, document: KnowledgeDocument) -> None:
         document.status = DocumentStatus.ARCHIVED
         document.is_active = False
+        db.flush()
+
+    def restore(self, db: Session, document: KnowledgeDocument) -> None:
+        document.status = DocumentStatus.READY
+        document.is_active = True
+        db.flush()
+
+    def delete_permanently(self, db: Session, document: KnowledgeDocument) -> None:
+        db.delete(document)
         db.flush()

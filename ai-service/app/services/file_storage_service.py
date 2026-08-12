@@ -19,6 +19,8 @@ class UnsupportedPDFError(PDFUploadError):
 class PDFTooLargeError(PDFUploadError):
     status_code = 413
 
+class PDFStorageError(Exception):
+    pass
 
 @dataclass(frozen=True)
 class StoredPDF:
@@ -26,7 +28,6 @@ class StoredPDF:
     original_filename: str
     checksum: str
     size: int
-
 
 class FileStorageService:
     READ_SIZE = 1024 * 1024
@@ -82,3 +83,15 @@ class FileStorageService:
         except Exception:
             destination.unlink(missing_ok=True)
             raise
+
+    def delete_pdf(self, source_uri: str | None) -> None:
+        if source_uri is None:
+            return
+
+        storage_dir = settings.document_storage_dir.resolve()
+        stored_path = Path(source_uri).resolve()
+        if stored_path.parent != storage_dir:
+            raise PDFStorageError("Đường dẫn file PDF nằm ngoài thư mục lưu trữ")
+
+        stored_path.unlink(missing_ok=True)
+    

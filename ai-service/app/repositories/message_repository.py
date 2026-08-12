@@ -14,3 +14,8 @@ class MessageRepository:
         messages = list(db.scalars(statement).all())
         messages.reverse()
         return messages
+
+    def get_all_by_conversation_id(self, db: Session, conversation_id: int) -> list[Message]:
+        statement = (select(Message).where(Message.conversation_id == conversation_id)
+                    .order_by(Message.created_at.asc(), Message.id.asc()))
+        return list(db.scalars(statement).all())

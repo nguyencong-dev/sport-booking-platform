@@ -36,21 +36,14 @@ def upload_document(
     del admin
     service = DocumentService()
     try:
-        document, job = service.upload_pdf(db, upload=file, title=title)
+        response = service.upload_pdf(db, upload=file, title=title)
     except PDFUploadError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
     except DuplicateDocumentError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    background_tasks.add_task(ingest_pdf_background, document.id, job.id)
-
-    return DocumentUploadResponse(
-        document_id=document.id,
-        job_id=job.id,
-        document_status=document.status,
-        job_status=job.status,
-        message=("Document uploaded and queued for ingestion"),
-    )
+    background_tasks.add_task(ingest_pdf_background, response.document_id, response.job_id)
+    return response
 
 @router.get("",response_model=list[DocumentListItemResponse],status_code=status.HTTP_200_OK,)
 def get_documents(
@@ -69,23 +62,9 @@ def get_document(id: Annotated[int, Path(gt=0)],
     del admin
     service = DocumentService()
     try:
-        document, ingestion_jobs, chunk_count = service.get_document_detail(db, id)
+        return service.get_document_detail(db, id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-
-    return DocumentDetailResponse(
-        id=document.id,
-        title=document.title,
-        description=document.description,
-        original_filename=document.original_filename,
-        status=document.status,
-        is_active=document.is_active,
-        created_at=document.created_at,
-        updated_at=document.updated_at,
-        indexed_at=document.indexed_at,
-        chunk_count=chunk_count,
-        ingestion_jobs=ingestion_jobs
-    )
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_document(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], 
@@ -129,28 +108,26 @@ def reindex_document(id: Annotated[int, Path(gt=0)], background_tasks: Backgroun
     del admin
     service = DocumentService()
     try:
-        document, job = service.reindex_document(db, id)
+        response = service.reindex_document(db, id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except DocumentReindexError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    background_tasks.add_task(ingest_pdf_background, document.id, job.id)
-
-    return DocumentUploadResponse(document_id=document.id, job_id=job.id, document_status=document.status, 
-                                  job_status=job.status, message="Document queued for reindexing")
+    background_tasks.add_task(ingest_pdf_background, response.document_id, response.job_id)
+    return response
 
 @router.post("/{id}/retry", response_model=DocumentUploadResponse, status_code=status.HTTP_202_ACCEPTED)
-def retry_document(id: Annotated[int, Path(gt=0)], background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)], admin: Annotated[CurrentUser, Depends(require_admin)]) -> DocumentUploadResponse:
+def retry_document(id: Annotated[int, Path(gt=0)], background_tasks: BackgroundTasks, db: Annotated[Session, Depends(get_db)], 
+                   admin: Annotated[CurrentUser, Depends(require_admin)]) -> DocumentUploadResponse:
     del admin
     service = DocumentService()
     try:
-        document, job = service.retry_document(db, id)
+        response = service.retry_document(db, id)
     except DocumentNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except DocumentRetryError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    background_tasks.add_task(ingest_pdf_background, document.id, job.id)
-
-    return DocumentUploadResponse(document_id=document.id, job_id=job.id, document_status=document.status, job_status=job.status, message="Document queued for retry")
+    background_tasks.add_task(ingest_pdf_background, response.document_id, response.job_id)
+    return response

@@ -21,3 +21,7 @@ class ConversationRepository:
         statement = (select(Conversation).where(Conversation.user_subject == user_subject)
                     .order_by(Conversation.updated_at.desc(), Conversation.id.desc()))
         return list(db.scalars(statement).all())
+
+    def delete(self, db: Session, conversation: Conversation) -> None:
+        db.delete(conversation)
+        db.flush()

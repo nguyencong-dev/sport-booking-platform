@@ -24,7 +24,8 @@ class ChatAgent:
         if max_iterations <= 0:
             raise ValueError("max_iterations phải lớn hơn 0")
 
-        self.model = model or ChatOpenAI(api_key=settings.openai_api_key.get_secret_value(), model=settings.openai_chat_model, temperature=0)
+        self.model = model or ChatOpenAI(api_key=settings.openai_api_key.get_secret_value(), 
+                                         model=settings.openai_chat_model, temperature=0)
         self.max_iterations = max_iterations
 
     async def run(self, *, question: str, history: list[Message] | None = None) -> ChatAgentResult:
@@ -62,7 +63,8 @@ class ChatAgent:
 
                 try:
                     tool_result = await selected_tool.ainvoke(tool_call["args"])
-                    messages.append(ToolMessage(content=self._serialize_tool_result(tool_result), tool_call_id=tool_call["id"], status="success"))
+                    messages.append(ToolMessage(content=self._serialize_tool_result(tool_result), 
+                                                tool_call_id=tool_call["id"], status="success"))
                 except Exception as exc:
                     tool_result = json.dumps({"error": str(exc)}, ensure_ascii=False)
                     messages.append(ToolMessage(content=tool_result, tool_call_id=tool_call["id"], status="error"))

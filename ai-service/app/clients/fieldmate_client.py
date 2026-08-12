@@ -5,7 +5,8 @@ import httpx
 
 from app.core.config import settings
 from app.schemas.auth import CurrentUser
-from app.schemas.fieldmate import CourtResponse, PageResponse, SportTypeResponse, VenueBookingScheduleResponse, VenueDetailResponse, VenueSummaryResponse
+from app.schemas.fieldmate import (CourtResponse, PageResponse, SportTypeResponse, 
+                                   VenueBookingScheduleResponse, VenueDetailResponse, VenueSummaryResponse)
 
 class FieldMateClientError(Exception):
     def __init__(self, status_code: int, detail: str) -> None:
@@ -24,7 +25,8 @@ class FieldMateClient:
         data = await self._get("/api/sport-types")
         return [SportTypeResponse.model_validate(item) for item in data]
 
-    async def search_venues(self, *, name: str | None = None, address: str | None = None, sport_type_id: int | None = None, status: str | None = "ACTIVE", page: int = 0) -> PageResponse[VenueSummaryResponse]:
+    async def search_venues(self, *, name: str | None = None, address: str | None = None, sport_type_id: int | None = None, 
+                            status: str | None = "ACTIVE", page: int = 0) -> PageResponse[VenueSummaryResponse]:
         params = {"name": name, "address": address, "sportTypeId": sport_type_id, "status": status, "page": page}
         data = await self._get("/api/venues", params=self._remove_none(params))
         return PageResponse[VenueSummaryResponse].model_validate(data)

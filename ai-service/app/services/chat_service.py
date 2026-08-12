@@ -2,12 +2,11 @@ from sqlalchemy.orm import Session
 from app.agents.chat_agent import ChatAgent, chat_agent
 from app.models.conversation import Conversation
 from app.models.enums import MessageRole
-from app.models.message import Message
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
 from app.repositories.message_source_repository import MessageSourceRepository
 from app.schemas.auth import CurrentUser
-from app.schemas.chat import ChatRequest, ChatResponse, ChatSourceResponse
+from app.schemas.chat import ChatRequest, ChatResponse, ChatSourceResponse, ConversationListItemResponse, ConversationMessageResponse
 
 class ChatServiceError(ValueError):
     pass
@@ -16,9 +15,11 @@ class ConversationNotFoundError(ChatServiceError):
     pass
 
 class ChatService:
-    def __init__(self, agent: ChatAgent | None = None, conversation_repository: ConversationRepository | None = None, message_repository: MessageRepository | None = None, message_source_repository: MessageSourceRepository | None = None, history_limit: int = 10) -> None:
+    def __init__(self, agent: ChatAgent | None = None, conversation_repository: ConversationRepository | None = None, 
+                 message_repository: MessageRepository | None = None, message_source_repository: MessageSourceRepository | None = None, 
+                 history_limit: int = 10) -> None:
         if history_limit <= 0:
-            raise ValueError("history_limit phải lớn hơn 0")
+            raise ValueError("history limit phải lớn hơn 0")
         self.agent = agent or chat_agent
         self.conversation_repository = conversation_repository or ConversationRepository()
         self.message_repository = message_repository or MessageRepository()
@@ -72,14 +73,28 @@ class ChatService:
 
         return conversation
 
-    def get_conversations(self, db: Session, current_user: CurrentUser) -> list[Conversation]:
-        return self.conversation_repository.get_all_by_user_subject(db, str(current_user.id))
+    def get_conversations(self, db: Session, current_user: CurrentUser) -> list[ConversationListItemResponse]:
+        conversations = self.conversation_repository.get_all_by_user_subject(db, str(current_user.id))
+        return [ConversationListItemResponse.model_validate(conversation) for conversation in conversations]
 
-    def get_conversation_messages(self, db: Session, current_user: CurrentUser, conversation_id: int) -> list[Message]:
+    def get_conversation_messages(self, db: Session, current_user: CurrentUser, conversation_id: int) -> list[ConversationMessageResponse]:
         conversation = self.conversation_repository.get_by_id_and_user_subject(db, conversation_id=conversation_id, user_subject=str(current_user.id))
         if conversation is None:
             raise ConversationNotFoundError("Không tìm thấy cuộc hội thoại hoặc bạn không có quyền truy cập")
 
-        return self.message_repository.get_all_by_conversation_id(db, conversation_id)
+        messages = self.message_repository.get_all_by_conversation_id(db, conversation_id)
+        return [ConversationMessageResponse.model_validate(message) for message in messages]
+
+    def delete_conversation(self, db: Session, current_user: CurrentUser, conversation_id: int) -> None:
+        conversation = self.conversation_repository.get_by_id_and_user_subject(db, conversation_id=conversation_id, user_subject=str(current_user.id))
+        if conversation is None:
+            raise ConversationNotFoundError("Không tìm thấy cuộc hội thoại hoặc bạn không có quyền truy cập")
+
+        try:
+            self.conversation_repository.delete(db, conversation)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
 
 chat_service = ChatService()

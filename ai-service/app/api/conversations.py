@@ -15,8 +15,17 @@ def get_conversations(db: Annotated[Session, Depends(get_db)],
     return chat_service.get_conversations(db, current_user)
 
 @router.get("/{id}/messages", response_model=list[ConversationMessageResponse], status_code=status.HTTP_200_OK)
-def get_conversation_messages(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> list[ConversationMessageResponse]:
+def get_conversation_messages(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], 
+                              current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> list[ConversationMessageResponse]:
     try:
         return chat_service.get_conversation_messages(db, current_user, id)
+    except ConversationNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_conversation(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], 
+                        current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> None:
+    try:
+        chat_service.delete_conversation(db, current_user, id)
     except ConversationNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

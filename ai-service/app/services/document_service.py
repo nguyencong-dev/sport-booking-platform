@@ -2,12 +2,11 @@ from fastapi import UploadFile
 from pathlib import Path
 from sqlalchemy.orm import Session
 from app.repositories.knowledge_chunk_repository import KnowledgeChunkRepository
-from app.models.ingestion_job import IngestionJob
-from app.models.knowledge_document import KnowledgeDocument
 from app.repositories.ingestion_job_repository import IngestionJobRepository
 from app.repositories.knowledge_document_repository import KnowledgeDocumentRepository
 from app.services.file_storage_service import FileStorageService
 from app.models.enums import DocumentStatus, IngestionJobStatus
+from app.schemas.document import DocumentUploadResponse, DocumentListItemResponse, DocumentDetailResponse
 
 class DocumentRetryError(RuntimeError):
     pass
@@ -37,7 +36,7 @@ class DocumentService:
         self.job_repository = IngestionJobRepository()
         self.chunk_repository = KnowledgeChunkRepository()
 
-    def upload_pdf(self, db: Session, *, upload: UploadFile, title: str | None) -> tuple[KnowledgeDocument, IngestionJob]:
+    def upload_pdf(self, db: Session, *, upload: UploadFile, title: str | None) -> DocumentUploadResponse:
         stored_pdf = self.file_storage.save_pdf(upload)
 
         try:
@@ -51,7 +50,9 @@ class DocumentService:
                     db.refresh(existing_document)
                     db.refresh(job)
                     stored_pdf.path.unlink(missing_ok=True)
-                    return existing_document, job
+                    return DocumentUploadResponse(document_id=existing_document.id, job_id=job.id, 
+                                                  document_status=existing_document.status, job_status=job.status, 
+                                                  message="Tài liệu đã được đưa vào hàng đợi để thử lại")
 
                 if existing_document.status == DocumentStatus.ARCHIVED:
                     raise DuplicateDocumentError("Tài liệu đã được lưu trữ, hãy khôi phục tài liệu")
@@ -65,24 +66,40 @@ class DocumentService:
             db.commit()
             db.refresh(document)
             db.refresh(job)
-            return document, job
+            return DocumentUploadResponse(document_id=document.id, job_id=job.id, 
+                                          document_status=document.status, job_status=job.status, 
+                                          message="Tài liệu đã được tải lên và đưa vào hàng đợi xử lý")
 
         except Exception:
             db.rollback()
             stored_pdf.path.unlink(missing_ok=True)
             raise
 
-    def get_documents(self, db: Session) -> list[KnowledgeDocument]:
-        return self.document_repository.get_all(db)
+    def get_documents(self, db: Session) -> list[DocumentListItemResponse]:
+        documents = self.document_repository.get_all(db)
+        return [DocumentListItemResponse.model_validate(document) for document in documents]
 
-    def get_document_detail(self, db: Session, document_id: int) -> tuple[KnowledgeDocument, list[IngestionJob], int]:
+    def get_document_detail(self, db: Session, document_id: int) -> DocumentDetailResponse:
         document = self.document_repository.get_by_id(db, document_id)
         if document is None:
             raise DocumentNotFoundError("Không tìm thấy tài liệu")
 
         ingestion_jobs = self.job_repository.get_all_by_document_id(db, document_id)
         chunk_count = self.chunk_repository.count_by_document_id(db, document_id)
-        return document, ingestion_jobs, chunk_count
+
+        return DocumentDetailResponse(
+            id=document.id,
+            title=document.title,
+            description=document.description,
+            original_filename=document.original_filename,
+            status=document.status,
+            is_active=document.is_active,
+            created_at=document.created_at,
+            updated_at=document.updated_at,
+            indexed_at=document.indexed_at,
+            chunk_count=chunk_count,
+            ingestion_jobs=ingestion_jobs,
+        )
 
     def delete_document(self, db: Session, document_id: int) -> None:
         document = self.document_repository.get_by_id(db, document_id)
@@ -129,7 +146,7 @@ class DocumentService:
             db.rollback()
             raise
 
-    def reindex_document(self, db: Session, document_id: int) -> tuple[KnowledgeDocument, IngestionJob]:
+    def reindex_document(self, db: Session, document_id: int) -> DocumentUploadResponse:
         document = self.document_repository.get_by_id(db, document_id)
         if document is None:
             raise DocumentNotFoundError("Không tìm thấy tài liệu")
@@ -146,12 +163,13 @@ class DocumentService:
             db.commit()
             db.refresh(document)
             db.refresh(job)
-            return document, job
+            return DocumentUploadResponse(document_id=document.id, job_id=job.id, document_status=document.status, 
+                                          job_status=job.status, message="Tài liệu đã được đưa vào hàng đợi để lập chỉ mục lại")
         except Exception:
             db.rollback()
             raise
 
-    def retry_document(self, db: Session, document_id: int) -> tuple[KnowledgeDocument, IngestionJob]:
+    def retry_document(self, db: Session, document_id: int) -> DocumentUploadResponse:
         document = self.document_repository.get_by_id(db, document_id)
         if document is None:
             raise DocumentNotFoundError("Không tìm thấy tài liệu")
@@ -172,7 +190,8 @@ class DocumentService:
             db.commit()
             db.refresh(document)
             db.refresh(job)
-            return document, job
+            return DocumentUploadResponse(document_id=document.id, job_id=job.id, document_status=document.status, 
+                                          job_status=job.status, message="Tài liệu đã được đưa vào hàng đợi để thử lại")
         except Exception:
             db.rollback()
             raise

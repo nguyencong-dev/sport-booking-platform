@@ -29,7 +29,8 @@ class FieldMateQueryService:
         if exact_matches:
             return exact_matches[0]
 
-        partial_matches = [sport_type for sport_type in sport_types if normalized_name in self._normalize_text(sport_type.name) or self._normalize_text(sport_type.name) in normalized_name]
+        partial_matches = [sport_type for sport_type in sport_types if normalized_name in self._normalize_text(sport_type.name) 
+                           or self._normalize_text(sport_type.name) in normalized_name]
 
         if len(partial_matches) == 1:
             return partial_matches[0]
@@ -41,7 +42,8 @@ class FieldMateQueryService:
         matched_names = ", ".join(sport_type.name for sport_type in partial_matches)
         raise FieldMateQueryError(f"Tên môn thể thao '{name}' chưa rõ ràng. Các kết quả phù hợp: {matched_names}")
 
-    async def search_venues(self, *, name: str | None = None, address: str | None = None, sport_type_name: str | None = None, page: int = 0) -> PageResponse[VenueSummaryResponse]:
+    async def search_venues(self, *, name: str | None = None, address: str | None = None, 
+                            sport_type_name: str | None = None, page: int = 0) -> PageResponse[VenueSummaryResponse]:
         if page < 0:
             raise FieldMateQueryError("Số trang không được nhỏ hơn 0")
 
@@ -54,7 +56,8 @@ class FieldMateQueryService:
             sport_type = await self.find_sport_type(cleaned_sport_type_name)
             sport_type_id = sport_type.id
 
-        return await self.client.search_venues(name=cleaned_name, address=cleaned_address, sport_type_id=sport_type_id, status="ACTIVE", page=page)
+        return await self.client.search_venues(name=cleaned_name, address=cleaned_address, 
+                                               sport_type_id=sport_type_id, status="ACTIVE", page=page)
 
     async def get_venue_information(self, venue_id: int) -> VenueInformationResponse:
         self._validate_positive_id(venue_id, "venue_id")

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BrainCircuit,
   Building2,
   CalendarDays,
   ChevronRight,
@@ -71,6 +72,11 @@ const adminNavigation = [
     label: "Banner",
     href: "/admin/banners",
     icon: Image,
+  },
+  {
+    label: "Kho tri thức AI",
+    href: "/admin/ai-documents",
+    icon: BrainCircuit,
   },
 ];
 

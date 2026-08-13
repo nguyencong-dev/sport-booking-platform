@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import {
   Building2,
   Bot,
@@ -80,6 +81,18 @@ const adminNavigation = [
   },
 ];
 
+function subscribeToHydration() {
+  return () => undefined;
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 function Brand() {
   return (
     <img
@@ -94,6 +107,12 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, ready, signOut } = useAuth();
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+  const authReady = hydrated && ready;
 
   const fullName = user
     ? [user.lastName, user.firstName].filter(Boolean).join(" ")
@@ -112,14 +131,15 @@ export function Header() {
     router.push("/profile");
   }
 
-  const navigation =
-    user?.role === "ADMIN"
-      ? adminNavigation
-      : user?.role === "COURT_OWNER"
-      ? courtOwnerNavigation
-      : user?.role === "CUSTOMER"
-      ? customerNavigation
-      : publicNavigation;
+  const navigation = !authReady
+    ? publicNavigation
+    : user?.role === "ADMIN"
+    ? adminNavigation
+    : user?.role === "COURT_OWNER"
+    ? courtOwnerNavigation
+    : user?.role === "CUSTOMER"
+    ? customerNavigation
+    : publicNavigation;
 
   if (pathname.startsWith("/admin")) {
     return null;
@@ -151,7 +171,7 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-1 lg:flex">
-          {ready && isAuthenticated && user ? (
+          {authReady && isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -274,7 +294,7 @@ export function Header() {
 
             <div className="mt-auto px-4 pb-4">
               <Separator className="mb-4" />
-              {ready && isAuthenticated ? (
+              {authReady && isAuthenticated ? (
                 <div className="space-y-3">
                   {user && (
                     <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">

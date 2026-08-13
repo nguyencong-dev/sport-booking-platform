@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, ge=1, le=65535)
     log_level: str = "INFO"
 
+    cors_allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
+    cors_allow_credentials: bool = False
+
     database_url: SecretStr
     database_schema: str = "ai"
 

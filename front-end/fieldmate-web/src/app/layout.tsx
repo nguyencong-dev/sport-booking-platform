@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Montserrat } from "next/font/google";
 import { AppFooter } from "@/components/Footer/AppFooter";
 import { Header } from "@/components/Header/Header";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
@@ -33,11 +34,13 @@ export default function RootLayout({
       className={`${montserrat.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <AuthProvider>
-          <Header />
-          {children}
-          <AppFooter />
-        </AuthProvider>
+        <TooltipProvider>
+          <AuthProvider>
+            <Header />
+            {children}
+            <AppFooter />
+          </AuthProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

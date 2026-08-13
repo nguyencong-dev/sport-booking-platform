@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import require_customer
 from app.schemas.auth import CurrentUser
 from app.schemas.chat import ConversationListItemResponse, ConversationMessageResponse
 from app.services.chat_service import chat_service, ConversationNotFoundError
@@ -11,12 +11,12 @@ router = APIRouter(prefix="/api/conversations", tags=["Conversations"])
 
 @router.get("", response_model=list[ConversationListItemResponse], status_code=status.HTTP_200_OK)
 def get_conversations(db: Annotated[Session, Depends(get_db)], 
-                      current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> list[ConversationListItemResponse]:
+                      current_user: Annotated[CurrentUser, Depends(require_customer)]) -> list[ConversationListItemResponse]:
     return chat_service.get_conversations(db, current_user)
 
 @router.get("/{id}/messages", response_model=list[ConversationMessageResponse], status_code=status.HTTP_200_OK)
 def get_conversation_messages(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], 
-                              current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> list[ConversationMessageResponse]:
+                              current_user: Annotated[CurrentUser, Depends(require_customer)]) -> list[ConversationMessageResponse]:
     try:
         return chat_service.get_conversation_messages(db, current_user, id)
     except ConversationNotFoundError as exc:
@@ -24,7 +24,7 @@ def get_conversation_messages(id: Annotated[int, Path(gt=0)], db: Annotated[Sess
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_conversation(id: Annotated[int, Path(gt=0)], db: Annotated[Session, Depends(get_db)], 
-                        current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> None:
+                        current_user: Annotated[CurrentUser, Depends(require_customer)]) -> None:
     try:
         chat_service.delete_conversation(db, current_user, id)
     except ConversationNotFoundError as exc:

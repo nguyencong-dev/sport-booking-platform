@@ -75,7 +75,15 @@ class ChatService:
 
     def get_conversations(self, db: Session, current_user: CurrentUser) -> list[ConversationListItemResponse]:
         conversations = self.conversation_repository.get_all_by_user_subject(db, str(current_user.id))
-        return [ConversationListItemResponse.model_validate(conversation) for conversation in conversations]
+        return [
+            ConversationListItemResponse(
+                id=conversation.id,
+                title=title or f"Cuộc trò chuyện #{conversation.id}",
+                created_at=conversation.created_at,
+                updated_at=conversation.updated_at,
+            )
+            for conversation, title in conversations
+        ]
 
     def get_conversation_messages(self, db: Session, current_user: CurrentUser, conversation_id: int) -> list[ConversationMessageResponse]:
         conversation = self.conversation_repository.get_by_id_and_user_subject(db, conversation_id=conversation_id, user_subject=str(current_user.id))

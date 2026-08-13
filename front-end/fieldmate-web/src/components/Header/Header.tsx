@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Building2,
+  Bot,
   CalendarDays,
   ChevronDown,
   CreditCard,
@@ -46,6 +47,11 @@ const publicNavigation = [
   { label: "Trang chủ", href: "/", icon: House },
   { label: "Sân tập", href: "/venues", icon: MapPin },
   { label: "Lịch đặt", href: "/bookings", icon: CalendarDays },
+];
+
+const customerNavigation = [
+  ...publicNavigation,
+  { label: "Trợ lý AI", href: "/assistant", icon: Bot },
 ];
 
 const courtOwnerNavigation = [
@@ -111,6 +117,8 @@ export function Header() {
       ? adminNavigation
       : user?.role === "COURT_OWNER"
       ? courtOwnerNavigation
+      : user?.role === "CUSTOMER"
+      ? customerNavigation
       : publicNavigation;
 
   if (pathname.startsWith("/admin")) {

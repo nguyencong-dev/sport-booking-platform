@@ -27,3 +27,9 @@ def require_admin(current_user: Annotated[CurrentUser, Depends(get_current_user)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Chỉ ADMIN được phép cung cấp dữ liệu cho AI")
 
     return current_user
+
+def require_customer(current_user: Annotated[CurrentUser, Depends(get_current_user)]) -> CurrentUser:
+    if current_user.role != "CUSTOMER":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Chỉ CUSTOMER được phép sử dụng trợ lý AI")
+
+    return current_user

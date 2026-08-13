@@ -13,7 +13,7 @@ const compactRoutePrefixes = [
 export function AppFooter() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/assistant") {
     return null;
   }
 

@@ -32,12 +32,9 @@ class ChatToolFactory:
     def __init__(self, retrieval: RetrievalService | None = None, fieldmate_query: FieldMateQueryService | None = None,
         query_planner: RagQueryPlanner | None = None, reranker: RagRerankingService | None = None,) -> None:
         self.retrieval = retrieval or retrieval_service
-        self.fieldmate_query = (
-            fieldmate_query or fieldmate_query_service
-        )
+        self.fieldmate_query = (fieldmate_query or fieldmate_query_service)
         self.query_planner = query_planner or rag_query_planner
         self.reranker = reranker or rag_reranking_service
-
         self._used_chunks: dict[int, RetrievedChunkResponse] = {}
 
     @property
@@ -94,8 +91,7 @@ class ChatToolFactory:
                 return json.dumps(
                     {
                         "message": (
-                            "Không tìm thấy nội dung đủ liên quan "
-                            "trong kho tài liệu."
+                            "Không tìm thấy nội dung đủ liên quan trong kho tài liệu."
                         ),
                         "search_query": query_plan.search_query,
                         "chunks": [],

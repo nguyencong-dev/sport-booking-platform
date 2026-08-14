@@ -1,14 +1,8 @@
 import json
-
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-
 from app.core.config import settings
-from app.schemas.retrieval import (
-    RagRerankSelection,
-    RetrievedChunkResponse,
-)
-
+from app.schemas.retrieval import RagRerankSelection, RetrievedChunkResponse
 from app.prompts.rag_prompt import RERANK_SYSTEM_PROMPT
 
 
@@ -20,17 +14,9 @@ class RagRerankingService:
             temperature=0,
         )
 
-        self.model = base_model.with_structured_output(
-            RagRerankSelection
-        )
+        self.model = base_model.with_structured_output(RagRerankSelection)
 
-    async def rerank(
-        self,
-        *,
-        query: str,
-        chunks: list[RetrievedChunkResponse],
-        limit: int | None = None,
-    ) -> list[RetrievedChunkResponse]:
+    async def rerank(self, *, query: str, chunks: list[RetrievedChunkResponse], limit: int | None = None) -> list[RetrievedChunkResponse]:
         if not chunks:
             return []
 

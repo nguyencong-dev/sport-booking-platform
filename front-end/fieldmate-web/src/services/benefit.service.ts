@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   BenefitRequest,
   BenefitResponse,
@@ -7,7 +10,7 @@ import type {
 export const benefitService = {
   async create(venueId: number, data: BenefitRequest) {
     const response = await fieldmateClient.post<BenefitResponse>(
-      `/secure/venues/${venueId}/benefits`,
+      fieldmateEndpoints.secureVenueBenefits(venueId),
       data,
     );
 
@@ -16,7 +19,7 @@ export const benefitService = {
 
   async update(benefitId: number, data: BenefitRequest) {
     const response = await fieldmateClient.put<BenefitResponse>(
-      `/secure/benefits/${benefitId}`,
+      fieldmateEndpoints.secureBenefit(benefitId),
       data,
     );
 
@@ -24,6 +27,8 @@ export const benefitService = {
   },
 
   async remove(benefitId: number) {
-    await fieldmateClient.delete(`/secure/benefits/${benefitId}`);
+    await fieldmateClient.delete(
+      fieldmateEndpoints.secureBenefit(benefitId),
+    );
   },
 };

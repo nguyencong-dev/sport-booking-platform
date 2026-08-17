@@ -25,7 +25,6 @@ class Settings(BaseSettings):
 
     fieldmate_api_base_url: str = "http://localhost:8080"
     fieldmate_api_timeout_seconds: int = Field(default=10, gt=0)
-    fieldmate_internal_api_key: SecretStr | None = None
 
     openai_api_key: SecretStr
     openai_chat_model: str

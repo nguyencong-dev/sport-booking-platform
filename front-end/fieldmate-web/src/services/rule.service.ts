@@ -1,10 +1,13 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type { RuleRequest, RuleResponse } from "@/types/rule";
 
 export const ruleService = {
   async create(venueId: number, data: RuleRequest) {
     const response = await fieldmateClient.post<RuleResponse>(
-      `/secure/venues/${venueId}/rules`,
+      fieldmateEndpoints.secureVenueRules(venueId),
       data,
     );
 
@@ -13,7 +16,7 @@ export const ruleService = {
 
   async update(ruleId: number, data: RuleRequest) {
     const response = await fieldmateClient.put<RuleResponse>(
-      `/secure/rules/${ruleId}`,
+      fieldmateEndpoints.secureRule(ruleId),
       data,
     );
 
@@ -21,6 +24,6 @@ export const ruleService = {
   },
 
   async remove(ruleId: number) {
-    await fieldmateClient.delete(`/secure/rules/${ruleId}`);
+    await fieldmateClient.delete(fieldmateEndpoints.secureRule(ruleId));
   },
 };

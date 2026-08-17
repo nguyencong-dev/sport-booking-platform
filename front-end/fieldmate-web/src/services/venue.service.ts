@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type { PageResponse } from "@/types/pagination";
 import type { VenueBookingScheduleResponse } from "@/types/booking";
 import type {
@@ -46,7 +49,7 @@ export const venueService = {
     const response = await fieldmateClient.get<
       PageResponse<VenueSummaryResponse>
     >(
-      "/venues",
+      fieldmateEndpoints.venues,
       {
         params: {
           name: params.name?.trim() || undefined,
@@ -63,7 +66,7 @@ export const venueService = {
 
   async getById(venueId: number) {
     const response = await fieldmateClient.get<VenueDetailResponse>(
-      `/venues/${venueId}`,
+      fieldmateEndpoints.venue(venueId),
     );
 
     return response.data;
@@ -72,7 +75,7 @@ export const venueService = {
   async getBookingSchedule(venueId: number, date: string) {
     const response =
       await fieldmateClient.get<VenueBookingScheduleResponse>(
-        `/venues/${venueId}/booking-schedule`,
+        fieldmateEndpoints.venueBookingSchedule(venueId),
         {
           params: {
             date,
@@ -86,7 +89,7 @@ export const venueService = {
   async getMyVenues(page = 0) {
     const response = await fieldmateClient.get<
       PageResponse<VenueSummaryResponse>
-    >("/secure/venues/me", {
+    >(fieldmateEndpoints.myVenues, {
       params: {
         page,
       },
@@ -97,7 +100,7 @@ export const venueService = {
 
   async getPending() {
     const response = await fieldmateClient.get<VenueSummaryResponse[]>(
-      "/secure/venues/pending",
+      fieldmateEndpoints.pendingVenues,
     );
 
     return response.data;
@@ -105,7 +108,7 @@ export const venueService = {
 
   async create(data: VenueUpsertRequest) {
     const response = await fieldmateClient.post<VenueSummaryResponse>(
-      "/secure/venues",
+      fieldmateEndpoints.secureVenues,
       createVenueFormData(data),
       {
         headers: {
@@ -119,7 +122,7 @@ export const venueService = {
 
   async update(venueId: number, data: VenueUpsertRequest) {
     const response = await fieldmateClient.put<VenueSummaryResponse>(
-      `/secure/venues/${venueId}`,
+      fieldmateEndpoints.secureVenue(venueId),
       createVenueFormData(data),
       {
         headers: {
@@ -132,12 +135,14 @@ export const venueService = {
   },
 
   async remove(venueId: number) {
-    await fieldmateClient.delete(`/secure/venues/${venueId}`);
+    await fieldmateClient.delete(
+      fieldmateEndpoints.secureVenue(venueId),
+    );
   },
 
   async updateStatus(venueId: number, status: VenueStatus) {
     const response = await fieldmateClient.patch<VenueSummaryResponse>(
-      `/secure/venues/${venueId}/status`,
+      fieldmateEndpoints.venueStatus(venueId),
       undefined,
       {
         params: {

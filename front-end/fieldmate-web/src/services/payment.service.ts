@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   PaymentRequest,
   PaymentResponse,
@@ -11,7 +14,7 @@ export const paymentService = {
   ): Promise<PaymentResponse> {
     const response =
       await fieldmateClient.post<PaymentResponse>(
-        `/secure/bookings/${bookingId}/payments`,
+        fieldmateEndpoints.bookingPayments(bookingId),
         request,
       );
 
@@ -22,7 +25,7 @@ export const paymentService = {
     bookingId: number,
   ): Promise<PaymentResponse> {
     const response = await fieldmateClient.post<PaymentResponse>(
-      `/secure/bookings/${bookingId}/cash-payments`,
+      fieldmateEndpoints.bookingCashPayments(bookingId),
     );
 
     return response.data;
@@ -32,7 +35,7 @@ export const paymentService = {
     bookingId: number,
   ): Promise<PaymentResponse[]> {
     const response = await fieldmateClient.get<PaymentResponse[]>(
-      `/secure/bookings/${bookingId}/payments`,
+      fieldmateEndpoints.bookingPayments(bookingId),
     );
 
     return response.data;
@@ -40,7 +43,7 @@ export const paymentService = {
 
   async getById(paymentId: number): Promise<PaymentResponse> {
     const response = await fieldmateClient.get<PaymentResponse>(
-      `/secure/payments/${paymentId}`,
+      fieldmateEndpoints.payment(paymentId),
     );
 
     return response.data;

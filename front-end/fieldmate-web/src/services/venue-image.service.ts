@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type { VenueImageResponse } from "@/types/venue-image";
 
 export const venueImageService = {
@@ -10,7 +13,7 @@ export const venueImageService = {
     });
 
     const response = await fieldmateClient.post<VenueImageResponse[]>(
-      `/secure/venues/${venueId}/images`,
+      fieldmateEndpoints.secureVenueImages(venueId),
       formData,
       {
         headers: {
@@ -23,6 +26,8 @@ export const venueImageService = {
   },
 
   async remove(imageId: number) {
-    await fieldmateClient.delete(`/secure/images/${imageId}`);
+    await fieldmateClient.delete(
+      fieldmateEndpoints.secureImage(imageId),
+    );
   },
 };

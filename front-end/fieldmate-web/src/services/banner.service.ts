@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   HeroBannerRequest,
   HeroBannerResponse,
@@ -21,18 +24,22 @@ function createBannerFormData(request: HeroBannerRequest) {
 export const bannerService = {
   async getAll() {
     const response =
-      await fieldmateClient.get<HeroBannerResponse[]>("/banners");
+      await fieldmateClient.get<HeroBannerResponse[]>(
+        fieldmateEndpoints.banners,
+      );
 
     return response.data;
   },
 
   async remove(bannerId: number) {
-    await fieldmateClient.delete(`/secure/banners/${bannerId}`);
+    await fieldmateClient.delete(
+      fieldmateEndpoints.secureBanner(bannerId),
+    );
   },
 
   async create(request: HeroBannerRequest) {
     const response = await fieldmateClient.post<HeroBannerResponse>(
-      "/secure/banners",
+      fieldmateEndpoints.secureBanners,
       createBannerFormData(request),
       {
         headers: {
@@ -49,7 +56,7 @@ export const bannerService = {
     request: HeroBannerRequest,
   ) {
     const response = await fieldmateClient.put<HeroBannerResponse>(
-      `/secure/banners/${bannerId}`,
+      fieldmateEndpoints.secureBanner(bannerId),
       createBannerFormData(request),
       {
         headers: {

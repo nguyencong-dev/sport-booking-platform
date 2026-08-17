@@ -3,6 +3,27 @@ import cookies from "react-cookies";
 
 import { API_CONFIG } from "@/configs/api.config";
 
+export const aiEndpoints = {
+  chat: "/chat",
+  conversations: "/conversations",
+  conversation: (conversationId: number) =>
+    `/conversations/${conversationId}`,
+  conversationMessages: (conversationId: number) =>
+    `/conversations/${conversationId}/messages`,
+  documents: "/admin/documents",
+  document: (documentId: number) =>
+    `/admin/documents/${documentId}`,
+  uploadDocument: "/admin/documents/upload",
+  restoreDocument: (documentId: number) =>
+    `/admin/documents/${documentId}/restore`,
+  permanentlyDeleteDocument: (documentId: number) =>
+    `/admin/documents/${documentId}/permanent`,
+  reindexDocument: (documentId: number) =>
+    `/admin/documents/${documentId}/reindex`,
+  retryDocument: (documentId: number) =>
+    `/admin/documents/${documentId}/retry`,
+} as const;
+
 if (!API_CONFIG.aiServiceURL) {
   throw new Error("NEXT_PUBLIC_AI_API_URL chưa được cấu hình");
 }

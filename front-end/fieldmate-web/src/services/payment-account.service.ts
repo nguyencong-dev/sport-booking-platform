@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   MomoPaymentAccountRequest,
   PaymentAccountStatus,
@@ -10,14 +13,14 @@ export const paymentAccountService = {
   async getMyAccounts() {
     const response = await fieldmateClient.get<
       PaymentAccountResponse[]
-    >("/secure/payment-accounts/me");
+    >(fieldmateEndpoints.myPaymentAccounts);
 
     return response.data;
   },
 
   async getById(accountId: number) {
     const response = await fieldmateClient.get<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}`,
+      fieldmateEndpoints.paymentAccount(accountId),
     );
 
     return response.data;
@@ -25,7 +28,7 @@ export const paymentAccountService = {
 
   async createMomo(request: MomoPaymentAccountRequest) {
     const response = await fieldmateClient.post<PaymentAccountResponse>(
-      "/secure/payment-accounts/momo",
+      fieldmateEndpoints.momoPaymentAccounts,
       request,
     );
 
@@ -34,7 +37,7 @@ export const paymentAccountService = {
 
   async createVnPay(request: VnPayPaymentAccountRequest) {
     const response = await fieldmateClient.post<PaymentAccountResponse>(
-      "/secure/payment-accounts/vnpay",
+      fieldmateEndpoints.vnPayPaymentAccounts,
       request,
     );
 
@@ -46,7 +49,7 @@ export const paymentAccountService = {
     request: MomoPaymentAccountRequest,
   ) {
     const response = await fieldmateClient.put<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}/momo`,
+      fieldmateEndpoints.momoPaymentAccount(accountId),
       request,
     );
 
@@ -58,7 +61,7 @@ export const paymentAccountService = {
     request: VnPayPaymentAccountRequest,
   ) {
     const response = await fieldmateClient.put<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}/vnpay`,
+      fieldmateEndpoints.vnPayPaymentAccount(accountId),
       request,
     );
 
@@ -67,7 +70,7 @@ export const paymentAccountService = {
 
   async activate(accountId: number) {
     const response = await fieldmateClient.patch<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}/active`,
+      fieldmateEndpoints.activatePaymentAccount(accountId),
     );
 
     return response.data;
@@ -75,7 +78,7 @@ export const paymentAccountService = {
 
   async deactivate(accountId: number) {
     const response = await fieldmateClient.patch<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}/inactive`,
+      fieldmateEndpoints.deactivatePaymentAccount(accountId),
     );
 
     return response.data;
@@ -84,7 +87,7 @@ export const paymentAccountService = {
   async getAll(status?: PaymentAccountStatus) {
     const response = await fieldmateClient.get<
       PaymentAccountResponse[]
-    >("/secure/payment-accounts", {
+    >(fieldmateEndpoints.paymentAccounts, {
       params: {
         status,
       },
@@ -98,7 +101,7 @@ export const paymentAccountService = {
     status: PaymentAccountStatus,
   ) {
     const response = await fieldmateClient.patch<PaymentAccountResponse>(
-      `/secure/payment-accounts/${accountId}/status`,
+      fieldmateEndpoints.paymentAccountStatus(accountId),
       {
         status,
       },

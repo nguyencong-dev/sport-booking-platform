@@ -1,4 +1,4 @@
-import { aiClient } from "@/services/clients/ai-client";
+import { aiClient, aiEndpoints } from "@/configs/ai-client";
 import type {
   KnowledgeDocumentDetailResponse,
   KnowledgeDocumentListItemResponse,
@@ -24,7 +24,7 @@ export const knowledgeDocumentService = {
   async getAll() {
     const response = await aiClient.get<
       KnowledgeDocumentListItemResponse[]
-    >("/admin/documents");
+    >(aiEndpoints.documents);
 
     return response.data;
   },
@@ -32,7 +32,7 @@ export const knowledgeDocumentService = {
   async getById(documentId: number) {
     const response =
       await aiClient.get<KnowledgeDocumentDetailResponse>(
-        `/admin/documents/${documentId}`,
+        aiEndpoints.document(documentId),
       );
 
     return response.data;
@@ -41,7 +41,7 @@ export const knowledgeDocumentService = {
   async upload(request: KnowledgeDocumentUploadRequest) {
     const response =
       await aiClient.post<KnowledgeDocumentUploadResponse>(
-        "/admin/documents/upload",
+        aiEndpoints.uploadDocument,
         createUploadFormData(request),
         {
           headers: {
@@ -54,23 +54,23 @@ export const knowledgeDocumentService = {
   },
 
   async archive(documentId: number) {
-    await aiClient.delete(`/admin/documents/${documentId}`);
+    await aiClient.delete(aiEndpoints.document(documentId));
   },
 
   async restore(documentId: number) {
-    await aiClient.post(`/admin/documents/${documentId}/restore`);
+    await aiClient.post(aiEndpoints.restoreDocument(documentId));
   },
 
   async permanentlyDelete(documentId: number) {
     await aiClient.delete(
-      `/admin/documents/${documentId}/permanent`,
+      aiEndpoints.permanentlyDeleteDocument(documentId),
     );
   },
 
   async reindex(documentId: number) {
     const response =
       await aiClient.post<KnowledgeDocumentUploadResponse>(
-        `/admin/documents/${documentId}/reindex`,
+        aiEndpoints.reindexDocument(documentId),
       );
 
     return response.data;
@@ -79,7 +79,7 @@ export const knowledgeDocumentService = {
   async retry(documentId: number) {
     const response =
       await aiClient.post<KnowledgeDocumentUploadResponse>(
-        `/admin/documents/${documentId}/retry`,
+        aiEndpoints.retryDocument(documentId),
       );
 
     return response.data;

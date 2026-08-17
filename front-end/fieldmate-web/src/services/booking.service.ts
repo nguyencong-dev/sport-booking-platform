@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   BookingRequest,
   BookingResponse,
@@ -22,7 +25,7 @@ type GetAdminBookingsParams = {
 export const bookingService = {
   async create(request: BookingRequest): Promise<BookingResponse> {
     const response = await fieldmateClient.post<BookingResponse>(
-      "/secure/bookings",
+      fieldmateEndpoints.secureBookings,
       request,
     );
 
@@ -31,7 +34,7 @@ export const bookingService = {
 
   async getMyBookings(): Promise<BookingResponse[]> {
     const response = await fieldmateClient.get<BookingResponse[]>(
-      "/secure/bookings/me",
+      fieldmateEndpoints.myBookings,
     );
 
     return response.data;
@@ -39,7 +42,7 @@ export const bookingService = {
 
   async getById(bookingId: number): Promise<BookingResponse> {
     const response = await fieldmateClient.get<BookingResponse>(
-      `/secure/bookings/${bookingId}`,
+      fieldmateEndpoints.secureBooking(bookingId),
     );
 
     return response.data;
@@ -51,7 +54,7 @@ export const bookingService = {
   ): Promise<PageResponse<BookingResponse>> {
     const response = await fieldmateClient.get<
       PageResponse<BookingResponse>
-    >(`/secure/venues/${venueId}/bookings`, {
+    >(fieldmateEndpoints.secureVenueBookings(venueId), {
       params: {
         page: params.page ?? 0,
         date: params.date || undefined,
@@ -65,7 +68,7 @@ export const bookingService = {
 
   async complete(bookingId: number): Promise<BookingResponse> {
     const response = await fieldmateClient.patch<BookingResponse>(
-      `/secure/bookings/${bookingId}/complete`,
+      fieldmateEndpoints.completeBooking(bookingId),
     );
 
     return response.data;
@@ -76,7 +79,7 @@ export const bookingService = {
   ): Promise<PageResponse<BookingResponse>> {
     const response = await fieldmateClient.get<
       PageResponse<BookingResponse>
-    >("/secure/bookings", {
+    >(fieldmateEndpoints.secureBookings, {
       params: {
         search: params.search?.trim() || undefined,
         status: params.status,

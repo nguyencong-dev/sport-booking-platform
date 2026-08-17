@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   UpdateUserRequest,
   UserResponse,
@@ -14,7 +17,9 @@ type GetUsersParams = {
 export const userService = {
   async getCurrentUser(): Promise<UserResponse> {
     const response =
-      await fieldmateClient.get<UserResponse>("/secure/users/me");
+      await fieldmateClient.get<UserResponse>(
+        fieldmateEndpoints.currentUser,
+      );
 
     return response.data;
   },
@@ -34,7 +39,7 @@ export const userService = {
 
     const response =
       await fieldmateClient.put<UserResponse>(
-        "/secure/users/me",
+        fieldmateEndpoints.currentUser,
         formData,
         {
           headers: {
@@ -51,7 +56,7 @@ export const userService = {
   ): Promise<PageResponse<UserResponse>> {
     const response = await fieldmateClient.get<
       PageResponse<UserResponse>
-    >("/secure/users", {
+    >(fieldmateEndpoints.users, {
       params: {
         email: params.email?.trim() || undefined,
         enabled: params.enabled,
@@ -64,7 +69,7 @@ export const userService = {
 
   async getById(userId: number): Promise<UserResponse> {
     const response = await fieldmateClient.get<UserResponse>(
-      `/secure/users/${userId}`,
+      fieldmateEndpoints.user(userId),
     );
 
     return response.data;
@@ -75,7 +80,7 @@ export const userService = {
     enabled: boolean,
   ): Promise<UserResponse> {
     const response = await fieldmateClient.patch<UserResponse>(
-      `/secure/users/${userId}/enabled`,
+      fieldmateEndpoints.userEnabled(userId),
       undefined,
       {
         params: {

@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   AuthResponse,
   LoginRequest,
@@ -9,7 +12,7 @@ import type {
 export const authService = {
   async login(request: LoginRequest) {
     const response = await fieldmateClient.post<AuthResponse>(
-      "/auth/login",
+      fieldmateEndpoints.login,
       request,
     );
 
@@ -31,7 +34,7 @@ export const authService = {
     }
 
     const response = await fieldmateClient.post<UserResponse>(
-      "/auth/register",
+      fieldmateEndpoints.register,
       formData,
       {
         headers: {

@@ -1,4 +1,7 @@
-import { fieldmateClient } from "@/services/clients/fieldmate-client";
+import {
+  fieldmateClient,
+  fieldmateEndpoints,
+} from "@/configs/fieldmate-client";
 import type {
   SportTypeRequest,
   SportTypeResponse,
@@ -7,14 +10,16 @@ import type {
 export const sportTypeService = {
   async getAll() {
     const response =
-      await fieldmateClient.get<SportTypeResponse[]>("/sport-types");
+      await fieldmateClient.get<SportTypeResponse[]>(
+        fieldmateEndpoints.sportTypes,
+      );
 
     return response.data;
   },
 
   async create(request: SportTypeRequest) {
     const response = await fieldmateClient.post<SportTypeResponse>(
-      "/secure/sport-types",
+      fieldmateEndpoints.secureSportTypes,
       request,
     );
 
@@ -23,7 +28,7 @@ export const sportTypeService = {
 
   async update(sportTypeId: number, request: SportTypeRequest) {
     const response = await fieldmateClient.put<SportTypeResponse>(
-      `/secure/sport-types/${sportTypeId}`,
+      fieldmateEndpoints.secureSportType(sportTypeId),
       request,
     );
 
@@ -32,7 +37,7 @@ export const sportTypeService = {
 
   async remove(sportTypeId: number) {
     await fieldmateClient.delete(
-      `/secure/sport-types/${sportTypeId}`,
+      fieldmateEndpoints.secureSportType(sportTypeId),
     );
   },
 };

@@ -6,6 +6,7 @@ import {
   ChevronRight,
   CircleAlert,
   Filter,
+  LoaderCircle,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -20,6 +21,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VenueCard } from "@/components/VenueCard/VenueCard";
+import {
+  useGeolocation,
+  type GeolocationPoint,
+} from "@/hooks/use-geolocation";
 import { sportTypeService } from "@/services/sport-type.service";
 import { venueService } from "@/services/venue.service";
 import type { SportTypeResponse } from "@/types/sport-type";
@@ -41,6 +46,14 @@ const statusOptions: Array<{
   { value: "INACTIVE", label: "Tạm ngưng" },
   { value: "PENDING", label: "Chờ duyệt" },
 ];
+
+const distanceOptions = [
+  { value: "", label: "Tất cả khoảng cách" },
+  { value: 2, label: "Trong 2 km" },
+  { value: 5, label: "Trong 5 km" },
+  { value: 10, label: "Trong 10 km" },
+  { value: 20, label: "Trong 20 km" },
+] satisfies Array<{ value: number | ""; label: string }>;
 
 function VenueGridSkeleton() {
   return (
@@ -69,12 +82,22 @@ export function VenuesScreen() {
   const [searchName, setSearchName] = useState("");
   const [selectedSport, setSelectedSport] = useState<number | "">("");
   const [selectedStatus, setSelectedStatus] = useState<VenueStatus | "">("");
+  const [selectedDistance, setSelectedDistance] = useState<number | "">("");
+  const [selectedLocation, setSelectedLocation] =
+    useState<GeolocationPoint | null>(null);
   const [pendingSport, setPendingSport] = useState<number | "">("");
   const [pendingStatus, setPendingStatus] = useState<VenueStatus | "">("");
+  const [pendingDistance, setPendingDistance] = useState<number | "">("");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const {
+    loading: locating,
+    error: locationError,
+    requestLocation,
+    clearLocation,
+  } = useGeolocation();
 
   const loadVenues = useCallback(async () => {
     try {
@@ -85,6 +108,9 @@ export function VenuesScreen() {
         name: searchName,
         sportTypeId: selectedSport || undefined,
         status: selectedStatus || undefined,
+        latitude: selectedLocation?.latitude,
+        longitude: selectedLocation?.longitude,
+        radiusKm: selectedDistance || undefined,
         page,
       });
 
@@ -102,7 +128,14 @@ export function VenuesScreen() {
     } finally {
       setLoading(false);
     }
-  }, [page, searchName, selectedSport, selectedStatus]);
+  }, [
+    page,
+    searchName,
+    selectedDistance,
+    selectedLocation,
+    selectedSport,
+    selectedStatus,
+  ]);
 
   useEffect(() => {
     loadVenues();
@@ -143,14 +176,32 @@ export function VenuesScreen() {
     setSearchName("");
     setSelectedSport("");
     setSelectedStatus("");
+    setSelectedDistance("");
+    setSelectedLocation(null);
     setPendingSport("");
     setPendingStatus("");
+    setPendingDistance("");
+    clearLocation();
     setPage(0);
   }
 
-  function applyFilters() {
+  async function applyFilters() {
+    let nextLocation: GeolocationPoint | null = null;
+
+    if (pendingDistance !== "") {
+      try {
+        nextLocation = await requestLocation();
+      } catch {
+        return;
+      }
+    } else {
+      clearLocation();
+    }
+
     setSelectedSport(pendingSport);
     setSelectedStatus(pendingStatus);
+    setSelectedDistance(pendingDistance);
+    setSelectedLocation(nextLocation);
     setPage(0);
   }
 
@@ -250,12 +301,46 @@ export function VenuesScreen() {
               </div>
             </fieldset>
 
+            <div className="my-6 h-px bg-slate-100" />
+
+            <fieldset>
+              <legend className="mb-3 text-sm font-bold text-slate-900">
+                Khoảng cách
+              </legend>
+              <div className="space-y-1.5">
+                {distanceOptions.map((distance) => (
+                  <label
+                    key={distance.value || "all"}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-50"
+                  >
+                    <input
+                      type="radio"
+                      name="distance"
+                      value={distance.value}
+                      checked={pendingDistance === distance.value}
+                      onChange={() => setPendingDistance(distance.value)}
+                      className="size-4 accent-[#ff174f]"
+                    />
+                    {distance.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            {locationError && (
+              <p className="mt-3 text-xs font-medium text-red-600">
+                {locationError}
+              </p>
+            )}
+
             <Button
               type="button"
-              onClick={applyFilters}
+              onClick={() => void applyFilters()}
+              disabled={locating}
               className="mt-6 h-11 w-full rounded-xl bg-[#073b77] font-bold text-white hover:bg-[#052f61]"
             >
-              Áp dụng
+              {locating && <LoaderCircle className="animate-spin" />}
+              {locating ? "Đang lấy vị trí..." : "Áp dụng"}
             </Button>
           </aside>
 
@@ -287,7 +372,10 @@ export function VenuesScreen() {
                   Danh sách sân tập
                 </h2>
               </div>
-              {(searchName || selectedSport || selectedStatus) && (
+              {(searchName ||
+                selectedSport ||
+                selectedStatus ||
+                selectedDistance) && (
                 <button
                   type="button"
                   onClick={resetFilters}

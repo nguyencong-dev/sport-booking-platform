@@ -1,6 +1,7 @@
 package com.nguyencong.fieldmate.service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 
 public interface VenueService {
     Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status,
-            int page);
+            BigDecimal latitude, BigDecimal longitude, BigDecimal radiusKm, int page);
 
     VenueResponse.Detail getVenueById(Long id);
 

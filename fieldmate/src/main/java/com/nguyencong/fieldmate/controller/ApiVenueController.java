@@ -1,6 +1,7 @@
 package com.nguyencong.fieldmate.controller;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -34,8 +35,12 @@ public class ApiVenueController {
     public ResponseEntity<Page<VenueResponse.Summary>> getAllVenues(@RequestParam(required = false) String name,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) Long sportTypeId, @RequestParam(required = false) StatusVenue status,
+            @RequestParam(required = false) BigDecimal latitude,
+            @RequestParam(required = false) BigDecimal longitude,
+            @RequestParam(required = false) BigDecimal radiusKm,
             @RequestParam(defaultValue = "0") int page) {
-        return new ResponseEntity<>(this.venueService.getAllVenues(name, address, sportTypeId, status, page),
+        return new ResponseEntity<>(this.venueService.getAllVenues(name, address, sportTypeId, status,
+                latitude, longitude, radiusKm, page),
                 HttpStatus.OK);
     }
 

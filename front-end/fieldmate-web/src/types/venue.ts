@@ -17,6 +17,7 @@ export type VenueSummaryResponse = {
   banner: string | null;
   logo: string | null;
   status: VenueStatus;
+  distanceKm: number | null;
 };
 
 export type VenueDetailResponse = VenueSummaryResponse & {

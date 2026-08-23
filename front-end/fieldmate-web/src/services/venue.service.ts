@@ -16,6 +16,9 @@ type GetVenuesParams = {
   address?: string;
   sportTypeId?: number;
   status?: VenueStatus;
+  latitude?: number;
+  longitude?: number;
+  radiusKm?: number;
   page?: number;
 };
 
@@ -56,6 +59,9 @@ export const venueService = {
           address: params.address?.trim() || undefined,
           sportTypeId: params.sportTypeId,
           status: params.status,
+          latitude: params.latitude,
+          longitude: params.longitude,
+          radiusKm: params.radiusKm,
           page: params.page ?? 0,
         },
       },

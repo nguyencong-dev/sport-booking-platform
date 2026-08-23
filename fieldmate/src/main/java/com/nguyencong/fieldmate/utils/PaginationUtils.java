@@ -17,4 +17,11 @@ public final class PaginationUtils {
 
         return PageRequest.of(safePage, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "id"));
     }
+
+    public static Pageable createUnsortedPageable(int page) {
+
+        int safePage = Math.max(page, 0);
+
+        return PageRequest.of(safePage, PAGE_SIZE);
+    }
 }

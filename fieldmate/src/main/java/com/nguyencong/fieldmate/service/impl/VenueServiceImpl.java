@@ -1,6 +1,7 @@
 package com.nguyencong.fieldmate.service.impl;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.enums.BookingStatus;
 import com.nguyencong.fieldmate.entity.enums.CourtStatus;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
+import com.nguyencong.fieldmate.exception.BadRequestException;
 import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
 import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
 import com.nguyencong.fieldmate.mapper.VenueMapper;
@@ -41,6 +43,14 @@ import com.nguyencong.fieldmate.utils.PaginationUtils;
 
 @Service
 public class VenueServiceImpl implements VenueService {
+
+    private static final double EARTH_RADIUS_KM = 6371.0088;
+    private static final BigDecimal MIN_LATITUDE = BigDecimal.valueOf(-90);
+    private static final BigDecimal MAX_LATITUDE = BigDecimal.valueOf(90);
+    private static final BigDecimal MIN_LONGITUDE = BigDecimal.valueOf(-180);
+    private static final BigDecimal MAX_LONGITUDE = BigDecimal.valueOf(180);
+    private static final BigDecimal MIN_RADIUS_KM = BigDecimal.valueOf(0.1);
+    private static final BigDecimal MAX_RADIUS_KM = BigDecimal.valueOf(100);
 
     @Autowired
     private VenueRepository venueRepository;
@@ -59,17 +69,83 @@ public class VenueServiceImpl implements VenueService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status, int page) {
-
-        Pageable pageable = PaginationUtils.createPageable(page);
+    public Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status,
+            BigDecimal latitude, BigDecimal longitude, BigDecimal radiusKm, int page) {
 
         String normalizedName = name == null || name.isBlank() ? null : name.trim();
-
         String normalizedAddress = address == null || address.isBlank() ? null : address.trim();
+        boolean hasLatitude = latitude != null;
+        boolean hasLongitude = longitude != null;
+
+        if (hasLatitude != hasLongitude) {
+            throw new BadRequestException("Vĩ độ và kinh độ phải được truyền cùng nhau");
+        }
+
+        if (!hasLatitude && radiusKm != null) {
+            throw new BadRequestException("Không thể lọc theo khoảng cách khi chưa có tọa độ");
+        }
+
+        validateSportTypeId(sportTypeId);
 
         Specification<Venue> specification = VenueSpecification.byFilters(normalizedName, normalizedAddress, sportTypeId, status);
 
-        return venueRepository.findAll(specification, pageable).map(VenueMapper::toSummary);
+        if (!hasLatitude) {
+            Pageable pageable = PaginationUtils.createPageable(page);
+            return venueRepository.findAll(specification, pageable).map(VenueMapper::toSummary);
+        }
+
+        validateRequiredRange(latitude, MIN_LATITUDE, MAX_LATITUDE,
+                "Vĩ độ phải nằm trong khoảng từ -90 đến 90");
+        validateRequiredRange(longitude, MIN_LONGITUDE, MAX_LONGITUDE,
+                "Kinh độ phải nằm trong khoảng từ -180 đến 180");
+        validateRadius(radiusKm);
+
+        specification = specification.and(VenueSpecification.byDistance(latitude, longitude, radiusKm));
+
+        Pageable pageable = PaginationUtils.createUnsortedPageable(page);
+
+        return venueRepository.findAll(specification, pageable).map(venue -> {
+            VenueResponse.Summary response = VenueMapper.toSummary(venue);
+            response.setDistanceKm(calculateDistance(latitude, longitude,
+                    venue.getLatitude(), venue.getLongitude()));
+            return response;
+        });
+    }
+
+    private void validateSportTypeId(Long sportTypeId) {
+        if (sportTypeId != null && sportTypeId <= 0) {
+            throw new BadRequestException("Mã môn thể thao phải lớn hơn 0");
+        }
+    }
+
+    private void validateRequiredRange(BigDecimal value, BigDecimal minimum, BigDecimal maximum, String message) {
+        if (value == null || value.compareTo(minimum) < 0 || value.compareTo(maximum) > 0) {
+            throw new BadRequestException(message);
+        }
+    }
+
+    private void validateRadius(BigDecimal radiusKm) {
+        if (radiusKm != null
+                && (radiusKm.compareTo(MIN_RADIUS_KM) < 0 || radiusKm.compareTo(MAX_RADIUS_KM) > 0)) {
+            throw new BadRequestException("Khoảng cách phải nằm trong khoảng từ 0.1 đến 100 km");
+        }
+    }
+
+    private double calculateDistance(BigDecimal sourceLatitude, BigDecimal sourceLongitude,
+            BigDecimal targetLatitude, BigDecimal targetLongitude) {
+
+        double sourceLatitudeRadians = Math.toRadians(sourceLatitude.doubleValue());
+        double sourceLongitudeRadians = Math.toRadians(sourceLongitude.doubleValue());
+        double targetLatitudeRadians = Math.toRadians(targetLatitude.doubleValue());
+        double targetLongitudeRadians = Math.toRadians(targetLongitude.doubleValue());
+        double centralAngleInput = Math.cos(sourceLatitudeRadians)
+                * Math.cos(targetLatitudeRadians)
+                * Math.cos(targetLongitudeRadians - sourceLongitudeRadians)
+                + Math.sin(sourceLatitudeRadians)
+                * Math.sin(targetLatitudeRadians);
+        double boundedInput = Math.max(-1.0, Math.min(1.0, centralAngleInput));
+
+        return EARTH_RADIUS_KM * Math.acos(boundedInput);
     }
 
     public Venue findVenue(Long id) {

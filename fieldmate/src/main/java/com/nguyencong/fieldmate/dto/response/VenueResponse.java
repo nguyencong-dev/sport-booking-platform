@@ -23,6 +23,7 @@ public class VenueResponse {
         private String banner;
         private String logo;
         private StatusVenue status;
+        private Double distanceKm;
     }
 
     @Getter

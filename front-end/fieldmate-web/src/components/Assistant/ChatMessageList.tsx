@@ -7,7 +7,9 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 import {
   Avatar,
@@ -215,8 +217,54 @@ function AssistantMessage({
             </span>
           </div>
         ) : (
-          <div className="rounded-3xl rounded-tl-md border border-slate-100 bg-white px-5 py-4 text-sm font-medium leading-7 whitespace-pre-wrap text-slate-700 shadow-sm">
-            {message.content}
+          <div className="rounded-3xl rounded-tl-md border border-slate-100 bg-white px-5 py-4 text-sm font-medium leading-7 text-slate-700 shadow-sm">
+            <ReactMarkdown
+              components={{
+                p({ children }) {
+                  return <p className="mb-3 last:mb-0">{children}</p>;
+                },
+                strong({ children }) {
+                  return (
+                    <strong className="font-extrabold text-slate-900">
+                      {children}
+                    </strong>
+                  );
+                },
+                ul({ children }) {
+                  return (
+                    <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">
+                      {children}
+                    </ul>
+                  );
+                },
+                ol({ children }) {
+                  return (
+                    <ol className="mb-3 list-decimal space-y-2 pl-5 last:mb-0">
+                      {children}
+                    </ol>
+                  );
+                },
+                li({ children }) {
+                  return <li className="pl-1">{children}</li>;
+                },
+                a({ href, children }) {
+                  if (href && /^\/venues\/\d+$/.test(href)) {
+                    return (
+                      <Link
+                        href={href}
+                        className="font-extrabold text-[#ff174f] underline decoration-[#ff174f]/40 underline-offset-4 transition-colors hover:text-[#073b77]"
+                      >
+                        {children}
+                      </Link>
+                    );
+                  }
+
+                  return <span>{children}</span>;
+                },
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
           </div>
         )}
 

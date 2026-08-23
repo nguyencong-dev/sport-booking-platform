@@ -3,6 +3,8 @@ export type ChatRole = "user" | "assistant";
 export type ChatRequest = {
   conversation_id?: number;
   message: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 export type ChatSourceResponse = {

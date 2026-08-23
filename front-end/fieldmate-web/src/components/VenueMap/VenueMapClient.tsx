@@ -74,6 +74,7 @@ export function VenueMapClient({
       <MapContainer
         center={position}
         zoom={17}
+        zoomAnimation={false}
         scrollWheelZoom
         className="h-[380px] w-full"
       >

@@ -4,6 +4,7 @@ import { AppFooter } from "@/components/Footer/AppFooter";
 import { Header } from "@/components/Header/Header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GeolocationProvider } from "@/contexts/GeolocationContext";
 import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
@@ -35,11 +36,13 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <TooltipProvider>
-          <AuthProvider>
-            <Header />
-            {children}
-            <AppFooter />
-          </AuthProvider>
+          <GeolocationProvider>
+            <AuthProvider>
+              <Header />
+              {children}
+              <AppFooter />
+            </AuthProvider>
+          </GeolocationProvider>
         </TooltipProvider>
       </body>
     </html>

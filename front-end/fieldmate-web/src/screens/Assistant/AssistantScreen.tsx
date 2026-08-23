@@ -14,6 +14,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGeolocation } from "@/hooks/use-geolocation";
 import { chatService } from "@/services/chat.service";
 import { conversationService } from "@/services/conversation.service";
 import type {
@@ -54,6 +55,7 @@ function getRequestErrorMessage(error: unknown, fallback: string) {
 export function AssistantScreen() {
   const router = useRouter();
   const { user, ready, isAuthenticated } = useAuth();
+  const { coordinates } = useGeolocation();
 
   const [conversations, setConversations] = useState<
     ConversationListItemResponse[]
@@ -276,6 +278,8 @@ export function AssistantScreen() {
       const response = await chatService.sendMessage({
         conversation_id: selectedConversationId,
         message: cleanedContent,
+        latitude: coordinates?.latitude,
+        longitude: coordinates?.longitude,
       });
 
       setMessages((current) =>

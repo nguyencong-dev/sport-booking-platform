@@ -96,7 +96,6 @@ export function VenuesScreen() {
     loading: locating,
     error: locationError,
     requestLocation,
-    clearLocation,
   } = useGeolocation();
 
   const loadVenues = useCallback(async () => {
@@ -181,7 +180,6 @@ export function VenuesScreen() {
     setPendingSport("");
     setPendingStatus("");
     setPendingDistance("");
-    clearLocation();
     setPage(0);
   }
 
@@ -194,8 +192,6 @@ export function VenuesScreen() {
       } catch {
         return;
       }
-    } else {
-      clearLocation();
     }
 
     setSelectedSport(pendingSport);

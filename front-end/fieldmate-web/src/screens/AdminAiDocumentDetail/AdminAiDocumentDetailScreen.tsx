@@ -47,10 +47,8 @@ export function AdminAiDocumentDetailScreen({
   documentId: number;
 }) {
   const router = useRouter();
-  const [document, setDocument] =
-    useState<KnowledgeDocumentDetailResponse | null>(null);
-  const [selectedAction, setSelectedAction] =
-    useState<KnowledgeDocumentAction | null>(null);
+  const [document, setDocument] = useState<KnowledgeDocumentDetailResponse | null>(null);
+  const [selectedAction, setSelectedAction] = useState<KnowledgeDocumentAction | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);

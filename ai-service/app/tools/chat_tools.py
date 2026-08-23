@@ -2,11 +2,12 @@ from app.core.config import settings
 from app.services.rag_query_planner import  RagQueryPlanner, rag_query_planner
 from app.services.rag_reranking_service import RagRerankingService, rag_reranking_service
 import json
+from decimal import Decimal
 from pydantic import BaseModel, Field
 from datetime import date
 from langchain_core.tools import BaseTool, tool
 from app.core.database import SessionLocal
-from app.services.fieldmate_query_service import FieldMateQueryService, fieldmate_query_service
+from app.services.fieldmate_query_service import FieldMateQueryService, fieldmate_query_service, FieldMateQueryError
 from app.services.retrieval_service import RetrievalService, retrieval_service
 from app.schemas.retrieval import RetrievedChunkResponse
 class SearchPdfKnowledgeInput(BaseModel):
@@ -28,13 +29,25 @@ class GetVenueScheduleInput(BaseModel):
     venue_id: int = Field(gt=0)
     booking_date: date = Field()
 
+class SearchNearbyVenuesInput(BaseModel):
+    sport_type_name: str | None = Field(default=None)
+    radius_km: Decimal | None = Field(
+        default=None,
+        ge=Decimal("0.1"),
+        le=Decimal("100"),
+    )
+    page: int = Field(default=0, ge=0)
+
 class ChatToolFactory:
     def __init__(self, retrieval: RetrievalService | None = None, fieldmate_query: FieldMateQueryService | None = None,
-        query_planner: RagQueryPlanner | None = None, reranker: RagRerankingService | None = None,) -> None:
+        query_planner: RagQueryPlanner | None = None, reranker: RagRerankingService | None = None,
+        latitude: Decimal | None = None, longitude: Decimal | None = None) -> None:
         self.retrieval = retrieval or retrieval_service
         self.fieldmate_query = (fieldmate_query or fieldmate_query_service)
         self.query_planner = query_planner or rag_query_planner
         self.reranker = reranker or rag_reranking_service
+        self.latitude = latitude
+        self.longitude = longitude
         self._used_chunks: dict[int, RetrievedChunkResponse] = {}
 
     @property
@@ -141,4 +154,27 @@ class ChatToolFactory:
             result = await self.fieldmate_query.get_venue_schedule(venue_id, booking_date)
             return json.dumps(result.model_dump(mode="json"), ensure_ascii=False)
 
-        return [search_pdf_knowledge, get_sport_types, search_venues, get_venue_information, get_court_information, get_venue_schedule]
+        @tool(args_schema=SearchNearbyVenuesInput)
+        async def search_nearby_venues(sport_type_name: str | None = None, radius_km: Decimal | None = None, page: int = 0) -> str:
+            """
+            Tìm sân gần vị trí GPS hiện tại của người dùng.
+
+            Sử dụng khi người dùng hỏi sân gần tôi, gần đây, quanh đây
+            hoặc sân gần nhất. Nếu không truyền bán kính, kết quả vẫn
+            được sắp xếp từ gần đến xa.
+            """
+
+            if self.latitude is None or self.longitude is None:
+                raise FieldMateQueryError("Người dùng chưa cung cấp vị trí GPS")
+
+            result = await self.fieldmate_query.search_venues(
+                sport_type_name=sport_type_name,
+                latitude=self.latitude,
+                longitude=self.longitude,
+                radius_km=radius_km,
+                page=page
+            )
+            return json.dumps(result.model_dump(mode="json"), ensure_ascii=False)
+
+        return [search_pdf_knowledge, get_sport_types, search_venues, 
+                get_venue_information, get_court_information, get_venue_schedule, search_nearby_venues]

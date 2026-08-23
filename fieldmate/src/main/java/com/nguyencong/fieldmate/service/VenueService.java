@@ -15,20 +15,12 @@ import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 public interface VenueService {
     Page<VenueResponse.Summary> getAllVenues(String name, String address, Long sportTypeId, StatusVenue status,
             BigDecimal latitude, BigDecimal longitude, BigDecimal radiusKm, int page);
-
     VenueResponse.Detail getVenueById(Long id);
-
     VenueResponse.Summary createVenue(VenueRequest request) throws IOException;
-
     VenueResponse.Summary updateVenue(Long id, VenueRequest request) throws IOException;
-
     void deleteVenue(Long id);
-
     VenueResponse.Summary updateVenueStatus(Long id, StatusVenue status);
-
     List<VenueResponse.Summary> getPendingVenues();
-
     Page<VenueResponse.Summary> getMyVenues(int page);
-
     VenueBookingScheduleResponse getBookingSchedule(Long venueId, LocalDate date);
 }

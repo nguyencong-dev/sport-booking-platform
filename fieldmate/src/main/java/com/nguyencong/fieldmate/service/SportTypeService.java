@@ -7,10 +7,7 @@ import com.nguyencong.fieldmate.dto.response.SportTypeResponse;
 
 public interface SportTypeService {
     List<SportTypeResponse> getAllSportTypes();
-
     SportTypeResponse createSportType(SportTypeRequest request);
-
     SportTypeResponse updateSportType(Long id, SportTypeRequest request);
-
     void deleteSportType(Long id);
 }

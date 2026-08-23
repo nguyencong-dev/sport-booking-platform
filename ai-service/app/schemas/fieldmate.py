@@ -34,6 +34,7 @@ class VenueSummaryResponse(FieldMateSchema):
     banner: str | None
     logo: str | None
     status: str
+    distance_km: Decimal | None = None
 
 class VenueDetailResponse(VenueSummaryResponse):
     owner_id: int | None

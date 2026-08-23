@@ -34,7 +34,7 @@ class ChatService:
             conversation = self._resolve_conversation(db, current_user=current_user, conversation_id=request.conversation_id)
             history = self.message_repository.get_recent_by_conversation_id(db, conversation_id=conversation.id, limit=self.history_limit)
             user_message = self.message_repository.create(db, conversation_id=conversation.id, role=MessageRole.USER, content=cleaned_message)
-            agent_result = await self.agent.run(question=cleaned_message, history=history)
+            agent_result = await self.agent.run(question=cleaned_message, history=history, latitude=request.latitude, longitude=request.longitude)
             assistant_message = self.message_repository.create(db, conversation_id=conversation.id, role=MessageRole.ASSISTANT, content=agent_result.answer)
             self.message_source_repository.create_many(db, message_id=assistant_message.id, chunks=agent_result.used_chunks)
             self.conversation_repository.touch(conversation)

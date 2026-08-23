@@ -1,7 +1,7 @@
 import asyncio
 import unicodedata
 from datetime import date
-
+from decimal import Decimal
 from app.clients import FieldMateClient, fieldmate_client
 from app.schemas.fieldmate import (CourtResponse, PageResponse, SportTypeResponse, 
 VenueBookingScheduleResponse, VenueInformationResponse, VenueSummaryResponse)
@@ -42,10 +42,14 @@ class FieldMateQueryService:
         matched_names = ", ".join(sport_type.name for sport_type in partial_matches)
         raise FieldMateQueryError(f"Tên môn thể thao '{name}' chưa rõ ràng. Các kết quả phù hợp: {matched_names}")
 
-    async def search_venues(self, *, name: str | None = None, address: str | None = None, 
-                            sport_type_name: str | None = None, page: int = 0) -> PageResponse[VenueSummaryResponse]:
+    async def search_venues(self, *, name: str | None = None, address: str | None = None, sport_type_name: str | None = None,
+                            latitude: Decimal | None = None, longitude: Decimal | None = None, radius_km: Decimal | None = None,
+                            page: int = 0) -> PageResponse[VenueSummaryResponse]:
         if page < 0:
             raise FieldMateQueryError("Số trang không được nhỏ hơn 0")
+
+        self._validate_coordinates(latitude, longitude)
+        self._validate_radius(radius_km)
 
         cleaned_name = self._clean_optional_text(name)
         cleaned_address = self._clean_optional_text(address)
@@ -56,8 +60,16 @@ class FieldMateQueryService:
             sport_type = await self.find_sport_type(cleaned_sport_type_name)
             sport_type_id = sport_type.id
 
-        return await self.client.search_venues(name=cleaned_name, address=cleaned_address, 
-                                               sport_type_id=sport_type_id, status="ACTIVE", page=page)
+        return await self.client.search_venues(
+            name=cleaned_name,
+            address=cleaned_address,
+            sport_type_id=sport_type_id,
+            status="ACTIVE",
+            latitude=latitude,
+            longitude=longitude,
+            radius_km=radius_km,
+            page=page,
+        )
 
     async def get_venue_information(self, venue_id: int) -> VenueInformationResponse:
         self._validate_positive_id(venue_id, "venue_id")
@@ -96,4 +108,20 @@ class FieldMateQueryService:
         normalized_value = normalized_value.replace("đ", "d")
         return " ".join(normalized_value.split())
 
+    @staticmethod
+    def _validate_coordinates(latitude: Decimal | None, longitude: Decimal | None) -> None:
+        if (latitude is None) != (longitude is None):
+            raise FieldMateQueryError("Vĩ độ và kinh độ phải được truyền cùng nhau")
+
+        if latitude is not None and not Decimal("-90") <= latitude <= Decimal("90"):
+            raise FieldMateQueryError("Vĩ độ phải nằm trong khoảng từ -90 đến 90")
+
+        if longitude is not None and not Decimal("-180") <= longitude <= Decimal("180"):
+            raise FieldMateQueryError("Kinh độ phải nằm trong khoảng từ -180 đến 180")
+
+    @staticmethod
+    def _validate_radius(radius_km: Decimal | None) -> None:
+        if radius_km is not None and not Decimal("0.1") <= radius_km <= Decimal("100"):
+            raise FieldMateQueryError("Khoảng cách phải nằm trong khoảng từ 0.1 đến 100 km")
+        
 fieldmate_query_service = FieldMateQueryService(fieldmate_client)

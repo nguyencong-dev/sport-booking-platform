@@ -10,6 +10,7 @@ from app.models.message import Message
 from app.prompts.chat_prompt import SYSTEM_PROMPT
 from app.schemas.retrieval import RetrievedChunkResponse
 from app.tools.chat_tools import ChatToolFactory
+from decimal import Decimal
 
 class ChatAgentError(RuntimeError):
     pass
@@ -28,17 +29,19 @@ class ChatAgent:
                                          model=settings.openai_chat_model, temperature=0)
         self.max_iterations = max_iterations
 
-    async def run(self, *, question: str, history: list[Message] | None = None) -> ChatAgentResult:
+    async def run(self, *, question: str, history: list[Message] | None = None, 
+                  latitude: Decimal | None = None, longitude: Decimal | None = None,) -> ChatAgentResult:
         cleaned_question = " ".join(question.split())
 
         if not cleaned_question:
             raise ChatAgentError("Câu hỏi không được để trống")
 
-        tool_factory = ChatToolFactory()
+        tool_factory = ChatToolFactory(latitude=latitude, longitude=longitude)
         tools = tool_factory.build()
         tools_by_name = {selected_tool.name: selected_tool for selected_tool in tools}
         model_with_tools = self.model.bind_tools(tools)
-        messages = self._build_messages(question=cleaned_question, history=history or [])
+        messages = self._build_messages(question=cleaned_question, history=history or [], 
+                                        location_available=latitude is not None and longitude is not None)
 
         for _ in range(self.max_iterations):
             response = await model_with_tools.ainvoke(messages)
@@ -71,8 +74,17 @@ class ChatAgent:
 
         raise ChatAgentError("AI đã vượt quá số lần gọi công cụ cho phép")
 
-    def _build_messages(self, *, question: str, history: list[Message]) -> list[BaseMessage]:
-        current_system_prompt = f"{SYSTEM_PROMPT}\n\nNgày hiện tại của hệ thống là {date.today().isoformat()}."
+    def _build_messages(self, *, question: str, history: list[Message], location_available: bool) -> list[BaseMessage]:
+        location_status = (
+            "Người dùng đã cung cấp vị trí GPS cho yêu cầu hiện tại."
+            if location_available
+            else "Người dùng chưa cung cấp vị trí GPS cho yêu cầu hiện tại."
+        )
+        current_system_prompt = (
+            f"{SYSTEM_PROMPT}\n\n"
+            f"Ngày hiện tại của hệ thống là {date.today().isoformat()}.\n"
+            f"{location_status}"
+        )
         messages: list[BaseMessage] = [SystemMessage(content=current_system_prompt)]
 
         for message in history:

@@ -8,10 +8,7 @@ import com.nguyencong.fieldmate.dto.response.HeroBannerResponse;
 
 public interface HeroBannerService {
         List<HeroBannerResponse> getAllHeroBanners();
-
         HeroBannerResponse createHeroBanner(HeroBannerRequest.Create request) throws IOException;
-
         HeroBannerResponse updateHeroBanner(Long id, HeroBannerRequest.Update request) throws IOException;
-
         void deleteHeroBanner(Long id);
 }

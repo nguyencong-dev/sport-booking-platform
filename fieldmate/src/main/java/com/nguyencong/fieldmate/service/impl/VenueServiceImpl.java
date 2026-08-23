@@ -94,10 +94,8 @@ public class VenueServiceImpl implements VenueService {
             return venueRepository.findAll(specification, pageable).map(VenueMapper::toSummary);
         }
 
-        validateRequiredRange(latitude, MIN_LATITUDE, MAX_LATITUDE,
-                "Vĩ độ phải nằm trong khoảng từ -90 đến 90");
-        validateRequiredRange(longitude, MIN_LONGITUDE, MAX_LONGITUDE,
-                "Kinh độ phải nằm trong khoảng từ -180 đến 180");
+        validateRequiredRange(latitude, MIN_LATITUDE, MAX_LATITUDE, "Vĩ độ phải nằm trong khoảng từ -90 đến 90");
+        validateRequiredRange(longitude, MIN_LONGITUDE, MAX_LONGITUDE,"Kinh độ phải nằm trong khoảng từ -180 đến 180");
         validateRadius(radiusKm);
 
         specification = specification.and(VenueSpecification.byDistance(latitude, longitude, radiusKm));
@@ -106,8 +104,7 @@ public class VenueServiceImpl implements VenueService {
 
         return venueRepository.findAll(specification, pageable).map(venue -> {
             VenueResponse.Summary response = VenueMapper.toSummary(venue);
-            response.setDistanceKm(calculateDistance(latitude, longitude,
-                    venue.getLatitude(), venue.getLongitude()));
+            response.setDistanceKm(calculateDistance(latitude, longitude, venue.getLatitude(), venue.getLongitude()));
             return response;
         });
     }

@@ -9,12 +9,8 @@ import com.nguyencong.fieldmate.dto.response.UserResponse;
 
 public interface UserService {
     UserResponse getCurrentUser();
-
     UserResponse updateCurrentUser(UserRequest request) throws IOException;
-
     Page<UserResponse> getAllUsers(String email, Boolean enabled, int page);
-
     UserResponse getUserById(Long id);
-
     UserResponse updateUserEnabled(Long id, boolean enabled);
 }

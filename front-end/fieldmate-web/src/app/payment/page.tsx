@@ -1,5 +1,5 @@
-import { PaymentScreen } from "@/screens/Payment/PaymentScreen";
+import { redirect } from "next/navigation";
 
 export default function PaymentPage() {
-  return <PaymentScreen />;
+  redirect("/bookings");
 }

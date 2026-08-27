@@ -1,23 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export type FooterVariant = "public" | "compact";
 
 const footerLinks = {
   "Khám phá": [
+    { label: "Trang chủ", href: "/" },
     { label: "Tìm sân", href: "/venues" },
-    { label: "Môn thể thao", href: "/sports" },
-    { label: "Cách đặt sân", href: "/how-it-works" },
+    { label: "Trợ lý AI", href: "/assistant" },
   ],
   "Tài khoản": [
     { label: "Đăng nhập", href: "/login" },
     { label: "Đăng ký", href: "/register" },
     { label: "Lịch đặt của tôi", href: "/bookings" },
-  ],
-  "Hỗ trợ": [
-    { label: "Trung tâm trợ giúp", href: "/support" },
-    { label: "Điều khoản sử dụng", href: "/terms" },
-    { label: "Chính sách bảo mật", href: "/privacy" },
   ],
 };
 
@@ -57,16 +54,16 @@ export function Footer({ variant = "public" }: FooterProps) {
               Sân tập
             </Link>
             <Link
-              href="/terms"
+              href="/bookings"
               className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
             >
-              Điều khoản
+              Lịch đặt
             </Link>
             <Link
-              href="/privacy"
+              href="mailto:nguyenvancong72033@gmail.com"
               className="text-xs font-semibold text-slate-500 transition-colors hover:text-[#ff174f]"
             >
-              Bảo mật
+              Liên hệ
             </Link>
           </nav>
         </div>
@@ -83,10 +80,11 @@ export function Footer({ variant = "public" }: FooterProps) {
             className="inline-flex items-center gap-2.5"
             aria-label="FieldMate - Trang chủ"
           >
-            <img
+            <Image
               src="https://res.cloudinary.com/dxek6c0tg/image/upload/v1784977099/4d7ca5d8-bdb2-4fbf-b282-ad3c7194163b_sba6et.jpg"
               alt="FieldMate"
-              loading="lazy"
+              width={230}
+              height={64}
               className="h-16 w-auto max-w-[230px] rounded-xl bg-white object-contain px-2"
             />
           </Link>
@@ -117,6 +115,50 @@ export function Footer({ variant = "public" }: FooterProps) {
               </ul>
             </div>
           ))}
+
+          <div>
+            <h2 className="text-sm font-extrabold text-white">
+              Liên hệ
+            </h2>
+
+            <address className="mt-4 space-y-3 not-italic">
+              <a
+                href="mailto:nguyenvancong72033@gmail.com"
+                className="flex items-start gap-2.5 text-sm text-blue-100/75 transition-colors hover:text-[#ff5c82]"
+              >
+                <Mail className="mt-0.5 size-4 shrink-0" />
+                <span className="break-all">
+                  nguyenvancong72033@gmail.com
+                </span>
+              </a>
+
+              <a
+                href="tel:0365777023"
+                className="flex items-start gap-2.5 text-sm text-blue-100/75 transition-colors hover:text-[#ff5c82]"
+              >
+                <Phone className="mt-0.5 size-4 shrink-0" />
+                <span>0365 777 023</span>
+              </a>
+
+              <p className="flex items-start gap-2.5 text-sm leading-6 text-blue-100/75">
+                <MapPin className="mt-1 size-4 shrink-0" />
+                <span>
+                  2/125A, Thủ Khoa Huân, Thuận Giao, Thuận An,
+                  Hồ Chí Minh
+                </span>
+              </p>
+
+              <a
+                href="https://www.facebook.com/nguyen.cong.643873/"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-start gap-2.5 text-sm text-blue-100/75 transition-colors hover:text-[#ff5c82]"
+              >
+                <FacebookIcon className="mt-0.5 size-4 shrink-0" />
+                <span>Facebook</span>
+              </a>
+            </address>
+          </div>
         </div>
       </div>
 
@@ -127,5 +169,18 @@ export function Footer({ variant = "public" }: FooterProps) {
         <p>Đặt sân nhanh, sẵn sàng vào trận.</p>
       </div>
     </footer>
+  );
+}
+
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M13.5 22v-8.7h2.9l.5-3.4h-3.4V7.7c0-1 .3-1.7 1.7-1.7H17V3a24 24 0 0 0-2.7-.2c-2.7 0-4.6 1.7-4.6 4.7v2.4H7v3.4h2.7V22h3.8Z" />
+    </svg>
   );
 }

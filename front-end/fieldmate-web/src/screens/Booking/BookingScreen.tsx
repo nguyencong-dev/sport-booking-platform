@@ -35,7 +35,7 @@ import {
   type BookingScheduleSelection,
 } from "@/components/BookingSchedule/BookingSchedulePicker";
 import { useAuth } from "@/contexts/AuthContext";
-import { bookingDraftService } from "@/services/booking-draft.service";
+import { bookingService } from "@/services/booking.service";
 import { courtService } from "@/services/court.service";
 import { venueService } from "@/services/venue.service";
 import type { CourtResponse } from "@/types/court";
@@ -96,6 +96,7 @@ export function BookingScreen({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -204,7 +205,7 @@ export function BookingScreen({
     setError("");
   }
 
-  function handleSubmit(
+  async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
@@ -224,16 +225,37 @@ export function BookingScreen({
       return;
     }
 
-    setError("");
+    try {
+      setSubmitting(true);
+      setError("");
 
-    bookingDraftService.save({
-      courtId: selectedCourt.id,
-      bookingDate,
-      startTime,
-      endTime,
-    });
+      const booking = await bookingService.create({
+        courtId: selectedCourt.id,
+        bookingDate,
+        startTime,
+        endTime,
+      });
 
-    router.push("/payment");
+      router.push(`/bookings/${booking.id}`);
+    } catch (requestError) {
+      if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
+        if (requestError.response?.status === 401) {
+          router.replace(
+            `/login?redirect=/venues/${venueId}/booking`,
+          );
+          return;
+        }
+
+        setError(
+          requestError.response?.data?.message ??
+            "Không thể tạo lịch đặt sân.",
+        );
+      } else {
+        setError("Không thể tạo lịch đặt sân.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!ready || (isAuthenticated && loading)) {
@@ -427,12 +449,20 @@ export function BookingScreen({
                 <Button
                   type="submit"
                   disabled={
+                    submitting ||
                     courts.length === 0 ||
                     durationHours <= 0
                   }
                   className="h-12 w-full rounded-xl bg-[#ff174f] text-base font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-[#e8003e]"
                 >
-                  Tiếp tục thanh toán
+                  {submitting ? (
+                    <>
+                      <LoaderCircle className="size-5 animate-spin" />
+                      Đang tạo lịch đặt...
+                    </>
+                  ) : (
+                    "Xác nhận đặt sân"
+                  )}
                 </Button>
               </form>
             </CardContent>

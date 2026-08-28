@@ -59,6 +59,7 @@ export const fieldmateEndpoints = {
   user: (userId: number) => `/secure/users/${userId}`,
   userEnabled: (userId: number) =>
     `/secure/users/${userId}/enabled`,
+  userRole: (userId: number) => `/secure/users/${userId}/role`,
   secureVenueImages: (venueId: number) =>
     `/secure/venues/${venueId}/images`,
   secureImage: (imageId: number) => `/secure/images/${imageId}`,

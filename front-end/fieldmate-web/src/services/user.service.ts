@@ -3,14 +3,17 @@ import {
   fieldmateEndpoints,
 } from "@/configs/fieldmate-client";
 import type {
+  UpdateUserRoleRequest,
   UpdateUserRequest,
   UserResponse,
+  UserRole,
 } from "@/types/auth";
 import type { PageResponse } from "@/types/pagination";
 
 type GetUsersParams = {
   email?: string;
   enabled?: boolean;
+  role?: UserRole;
   page?: number;
 };
 
@@ -60,6 +63,7 @@ export const userService = {
       params: {
         email: params.email?.trim() || undefined,
         enabled: params.enabled,
+        role: params.role,
         page: params.page ?? 0,
       },
     });
@@ -87,6 +91,18 @@ export const userService = {
           enabled,
         },
       },
+    );
+
+    return response.data;
+  },
+
+  async updateRole(
+    userId: number,
+    request: UpdateUserRoleRequest,
+  ): Promise<UserResponse> {
+    const response = await fieldmateClient.patch<UserResponse>(
+      fieldmateEndpoints.userRole(userId),
+      request,
     );
 
     return response.data;

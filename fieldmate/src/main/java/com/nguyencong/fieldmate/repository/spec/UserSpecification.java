@@ -7,6 +7,7 @@ import java.util.Locale;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.entity.enums.Role;
 
 import jakarta.persistence.criteria.Predicate;
 
@@ -15,7 +16,7 @@ public final class UserSpecification {
     private UserSpecification() {
     }
 
-    public static Specification<User> byFilters(String email, Boolean enabled) {
+    public static Specification<User> byFilters(String email, Boolean enabled, Role role) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -25,6 +26,10 @@ public final class UserSpecification {
 
             if (enabled != null) {
                 predicates.add(cb.equal(root.get("enabled"), enabled));
+            }
+
+            if (role != null) {
+                predicates.add(cb.equal(root.get("role"), role));
             }
 
             return cb.and(predicates.toArray(Predicate[]::new));

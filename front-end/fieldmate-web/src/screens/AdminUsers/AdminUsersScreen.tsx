@@ -29,6 +29,7 @@ type ApiErrorResponse = {
 };
 
 type EnabledFilter = "ALL" | "ACTIVE" | "LOCKED";
+type RoleFilter = "ALL" | UserRole;
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Quản trị viên",
@@ -42,6 +43,7 @@ export function AdminUsersScreen() {
   const [email, setEmail] = useState("");
   const [enabledFilter, setEnabledFilter] =
     useState<EnabledFilter>("ALL");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -74,6 +76,7 @@ export function AdminUsersScreen() {
             enabledFilter === "ALL"
               ? undefined
               : enabledFilter === "ACTIVE",
+          role: roleFilter === "ALL" ? undefined : roleFilter,
           page,
         });
 
@@ -113,7 +116,7 @@ export function AdminUsersScreen() {
     return () => {
       active = false;
     };
-  }, [email, enabledFilter, page, refreshKey]);
+  }, [email, enabledFilter, page, refreshKey, roleFilter]);
 
   async function handleToggleEnabled() {
     if (!selectedUser) {
@@ -150,6 +153,20 @@ export function AdminUsersScreen() {
         title="Người dùng"
         action={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <select
+              value={roleFilter}
+              onChange={(event) => {
+                setPage(0);
+                setRoleFilter(event.target.value as RoleFilter);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
+            >
+              <option value="ALL">Tất cả vai trò</option>
+              <option value="CUSTOMER">Khách hàng</option>
+              <option value="COURT_OWNER">Chủ sân</option>
+              <option value="ADMIN">Quản trị viên</option>
+            </select>
+
             <select
               value={enabledFilter}
               onChange={(event) => {

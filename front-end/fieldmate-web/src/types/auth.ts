@@ -28,6 +28,10 @@ export type UpdateUserRequest = {
 
 export type UserRole = "CUSTOMER" | "COURT_OWNER" | "ADMIN";
 
+export type UpdateUserRoleRequest = {
+  role: UserRole;
+};
+
 export type UserResponse = {
   id: number;
   email: string;

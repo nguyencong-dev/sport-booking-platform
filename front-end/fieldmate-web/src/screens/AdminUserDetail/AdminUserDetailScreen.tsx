@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft, Power, UserRound } from "lucide-react";
+import { ArrowLeft, Power, ShieldCheck, UserRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -33,9 +33,12 @@ export function AdminUserDetailScreen({
   userId: number;
 }) {
   const [user, setUser] = useState<UserResponse | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole>("CUSTOMER");
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
+  const [updatingEnabled, setUpdatingEnabled] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -43,7 +46,9 @@ export function AdminUserDetailScreen({
       try {
         setLoading(true);
         setError("");
-        setUser(await userService.getById(userId));
+        const loadedUser = await userService.getById(userId);
+        setUser(loadedUser);
+        setSelectedRole(loadedUser.role);
       } catch (requestError) {
         if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
           setError(
@@ -67,7 +72,7 @@ export function AdminUserDetailScreen({
     }
 
     try {
-      setUpdating(true);
+      setUpdatingEnabled(true);
       setError("");
       setUser(
         await userService.updateEnabled(user.id, !user.enabled),
@@ -83,7 +88,35 @@ export function AdminUserDetailScreen({
         setError("Đã xảy ra lỗi khi cập nhật người dùng.");
       }
     } finally {
-      setUpdating(false);
+      setUpdatingEnabled(false);
+    }
+  }
+
+  async function handleUpdateRole() {
+    if (!user || selectedRole === user.role) {
+      return;
+    }
+
+    try {
+      setUpdatingRole(true);
+      setError("");
+      const updatedUser = await userService.updateRole(user.id, {
+        role: selectedRole,
+      });
+      setUser(updatedUser);
+      setSelectedRole(updatedUser.role);
+      setRoleConfirmOpen(false);
+    } catch (requestError) {
+      if (axios.isAxiosError<ApiErrorResponse>(requestError)) {
+        setError(
+          requestError.response?.data?.message ??
+            "Không thể cập nhật vai trò người dùng.",
+        );
+      } else {
+        setError("Đã xảy ra lỗi khi phân quyền người dùng.");
+      }
+    } finally {
+      setUpdatingRole(false);
     }
   }
 
@@ -160,7 +193,47 @@ export function AdminUserDetailScreen({
             ))}
           </dl>
 
-          <div className="flex justify-end border-t border-slate-100 p-5">
+          <div className="border-t border-slate-100 p-5">
+            <div className="mb-5 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h3 className="flex items-center gap-2 font-black text-[#073b77]">
+                    <ShieldCheck className="size-5" />
+                    Phân quyền người dùng
+                  </h3>
+                  {user.role === "ADMIN" && (
+                    <p className="mt-1 text-sm font-medium text-slate-500">
+                      Không thể thay đổi vai trò của tài khoản quản trị viên.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+                  <select
+                    value={selectedRole}
+                    disabled={user.role === "ADMIN" || updatingRole}
+                    onChange={(event) => setSelectedRole(event.target.value as UserRole)}
+                    className="h-11 min-w-52 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 focus:border-[#ff174f] focus:ring-3 focus:ring-rose-100"
+                  >
+                    {user.role === "ADMIN" && <option value="ADMIN">Quản trị viên</option>}
+                    {user.role !== "ADMIN" && <option value="CUSTOMER">Khách hàng</option>}
+                    {user.role !== "ADMIN" && <option value="COURT_OWNER">Chủ sân</option>}
+                  </select>
+
+                  <Button
+                    type="button"
+                    disabled={user.role === "ADMIN" || selectedRole === user.role || updatingRole}
+                    onClick={() => setRoleConfirmOpen(true)}
+                    className="h-11 rounded-xl bg-[#073b77] px-5 font-bold text-white hover:bg-[#052d5c]"
+                  >
+                    <ShieldCheck className="size-4" />
+                    Cập nhật vai trò
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
             <Button
               type="button"
               variant={user.enabled ? "destructive" : "outline"}
@@ -170,6 +243,7 @@ export function AdminUserDetailScreen({
               <Power className="size-4" />
               {user.enabled ? "Khóa tài khoản" : "Mở khóa tài khoản"}
             </Button>
+            </div>
           </div>
         </section>
       ) : null}
@@ -185,8 +259,20 @@ export function AdminUserDetailScreen({
         }
         confirmLabel={user?.enabled ? "Khóa tài khoản" : "Mở khóa"}
         variant={user?.enabled ? "destructive" : "success"}
-        loading={updating}
+        loading={updatingEnabled}
         onConfirm={handleToggleEnabled}
+      />
+
+      <ConfirmationDialog
+        open={roleConfirmOpen}
+        onOpenChange={setRoleConfirmOpen}
+        title="Thay đổi vai trò?"
+        description={`Vai trò của ${user?.email ?? "người dùng"} sẽ được thay đổi từ ${user ? roleLabels[user.role] : ""} thành ${roleLabels[selectedRole]}.`}
+        confirmLabel="Cập nhật vai trò"
+        variant="warning"
+        icon={ShieldCheck}
+        loading={updatingRole}
+        onConfirm={handleUpdateRole}
       />
     </>
   );

@@ -14,6 +14,7 @@ import com.cloudinary.Cloudinary;
 import com.nguyencong.fieldmate.dto.request.UserRequest;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
 import com.nguyencong.fieldmate.entity.User;
+import com.nguyencong.fieldmate.entity.enums.Role;
 import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
 import com.nguyencong.fieldmate.exception.FileUploadException;
 import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
@@ -71,10 +72,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllUsers(String email, Boolean enabled, int page) {
+    public Page<UserResponse> getAllUsers(String email, Boolean enabled, Role role, int page) {
         Pageable pageable = PaginationUtils.createPageable(page);
         String normalizedEmail = email == null || email.isBlank() ? null : email.trim();
-        Specification<User> specification = UserSpecification.byFilters(normalizedEmail, enabled);
+        Specification<User> specification = UserSpecification.byFilters(normalizedEmail, enabled, role);
 
         return userRepository.findAll(specification, pageable).map(UserMapper::toResponse);
     }
@@ -82,8 +83,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
 
         return UserMapper.toResponse(user);
     }
@@ -102,6 +102,36 @@ public class UserServiceImpl implements UserService {
         }
 
         user.setEnabled(enabled);
+
+        User savedUser = userRepository.save(user);
+
+        return UserMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserRole(Long id, Role newRole) {
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
+        User currentAdmin = currentUserProvider.getCurrentUser();
+
+        if (user.getId().equals(currentAdmin.getId())) {
+            throw new BusinessRuleViolationException("Quản trị viên không thể tự thay đổi vai trò của mình");
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            throw new BusinessRuleViolationException("Không thể thay đổi vai trò của quản trị viên");
+        }
+
+        if (newRole == Role.ADMIN) {
+            throw new BusinessRuleViolationException("Không được cấp vai trò quản trị viên");
+        }
+
+        if (user.getRole() == Role.COURT_OWNER && newRole == Role.CUSTOMER && !user.getVenues().isEmpty()) {
+            throw new BusinessRuleViolationException("Không thể đổi vai trò vì chủ sân đang quản lý sân");
+        }
+
+        user.setRole(newRole);
 
         User savedUser = userRepository.save(user);
 

@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nguyencong.fieldmate.dto.request.UpdateUserRoleRequest;
 import com.nguyencong.fieldmate.dto.request.UserRequest;
 import com.nguyencong.fieldmate.dto.response.UserResponse;
+import com.nguyencong.fieldmate.entity.enums.Role;
 import com.nguyencong.fieldmate.service.UserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -47,8 +50,9 @@ public class ApiUserController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/secure/users")
     public ResponseEntity<Page<UserResponse>> getAllUsers(@RequestParam(required = false) String email,
-            @RequestParam(required = false) Boolean enabled, @RequestParam(defaultValue = "0") int page) {
-        return new ResponseEntity<>(this.userService.getAllUsers(email, enabled, page), HttpStatus.OK);
+            @RequestParam(required = false) Boolean enabled, @RequestParam(required = false) Role role,
+            @RequestParam(defaultValue = "0") int page) {
+        return new ResponseEntity<>(this.userService.getAllUsers(email, enabled, role, page), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -65,5 +69,12 @@ public class ApiUserController {
             @RequestParam boolean enabled) {
 
         return new ResponseEntity<>(this.userService.updateUserEnabled(id, enabled), HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/secure/users/{id}/role")
+    public ResponseEntity<UserResponse> updateUserRole(@PathVariable Long id,
+            @Valid @RequestBody UpdateUserRoleRequest request) {
+        return new ResponseEntity<>(this.userService.updateUserRole(id, request.getRole()), HttpStatus.OK);
     }
 }

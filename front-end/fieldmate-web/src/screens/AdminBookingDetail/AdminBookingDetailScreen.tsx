@@ -33,7 +33,6 @@ type ApiErrorResponse = {
 const bookingStatusLabels: Record<BookingStatus, string> = {
   PENDING: "Chờ thanh toán",
   CONFIRMED: "Đã xác nhận",
-  CANCELLED: "Đã hủy",
   COMPLETED: "Hoàn thành",
   EXPIRED: "Hết hạn",
 };
@@ -48,7 +47,6 @@ const paymentStatusConfig: Record<
   PENDING: { label: "Đang chờ", tone: "amber" },
   PAID: { label: "Đã thanh toán", tone: "green" },
   FAILED: { label: "Thất bại", tone: "red" },
-  REFUNDED: { label: "Đã hoàn tiền", tone: "slate" },
   EXPIRED: { label: "Hết hạn", tone: "slate" },
 };
 
@@ -131,13 +129,11 @@ export function AdminBookingDetailScreen({
                 tone={
                   booking.status === "COMPLETED"
                     ? "green"
-                    : booking.status === "CANCELLED"
-                      ? "red"
-                      : booking.status === "CONFIRMED"
-                        ? "blue"
-                        : booking.status === "PENDING"
-                          ? "amber"
-                          : "slate"
+                    : booking.status === "CONFIRMED"
+                      ? "blue"
+                      : booking.status === "PENDING"
+                        ? "amber"
+                        : "slate"
                 }
               />
             </div>

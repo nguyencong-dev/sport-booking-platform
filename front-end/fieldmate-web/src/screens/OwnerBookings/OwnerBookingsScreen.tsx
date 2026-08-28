@@ -58,10 +58,6 @@ const bookingStatusConfig: Record<
     label: "Đã xác nhận",
     className: "bg-blue-100 text-blue-700",
   },
-  CANCELLED: {
-    label: "Đã hủy",
-    className: "bg-red-100 text-red-700",
-  },
   COMPLETED: {
     label: "Hoàn thành",
     className: "bg-emerald-100 text-emerald-700",
@@ -87,10 +83,6 @@ const paymentStatusConfig: Record<
   FAILED: {
     label: "Thất bại",
     className: "bg-red-100 text-red-700",
-  },
-  REFUNDED: {
-    label: "Đã hoàn tiền",
-    className: "bg-violet-100 text-violet-700",
   },
   EXPIRED: {
     label: "Hết hạn",

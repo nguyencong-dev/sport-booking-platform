@@ -89,7 +89,7 @@ public class BookingServiceImpl implements BookingService {
                 request.getBookingDate(),
                 request.getStartTime(),
                 request.getEndTime(),
-                Set.of(BookingStatus.CANCELLED, BookingStatus.EXPIRED),
+                Set.of(BookingStatus.EXPIRED),
                 BookingStatus.PENDING,
                 cutoff);
 

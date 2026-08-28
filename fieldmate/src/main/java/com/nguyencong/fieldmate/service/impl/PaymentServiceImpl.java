@@ -197,10 +197,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void validateBooking(Booking booking) {
 
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new BusinessRuleViolationException("Booking đã bị hủy");
-        }
-
         if (booking.getStatus() == BookingStatus.COMPLETED) {
             throw new BusinessRuleViolationException("Booking đã hoàn thành");
         }

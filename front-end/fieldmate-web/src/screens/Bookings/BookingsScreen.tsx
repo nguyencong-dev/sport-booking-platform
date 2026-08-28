@@ -39,7 +39,6 @@ const filters: Array<{
   { value: "PENDING", label: "Chờ xác nhận" },
   { value: "CONFIRMED", label: "Đã xác nhận" },
   { value: "COMPLETED", label: "Hoàn thành" },
-  { value: "CANCELLED", label: "Đã hủy" },
   { value: "EXPIRED", label: "Hết hạn" },
 ];
 
@@ -61,10 +60,6 @@ const statusConfig: Record<
   COMPLETED: {
     label: "Hoàn thành",
     className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  },
-  CANCELLED: {
-    label: "Đã hủy",
-    className: "bg-red-50 text-red-700 ring-red-200",
   },
   EXPIRED: {
     label: "Hết hạn",

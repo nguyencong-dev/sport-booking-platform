@@ -92,10 +92,6 @@ const bookingStatusConfig: Record<
     label: "Hoàn thành",
     className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   },
-  CANCELLED: {
-    label: "Đã hủy",
-    className: "bg-red-50 text-red-700 ring-red-200",
-  },
   EXPIRED: {
     label: "Hết hạn",
     className: "bg-slate-100 text-slate-600 ring-slate-200",
@@ -117,10 +113,6 @@ const paymentStatusConfig: Record<
   FAILED: {
     label: "Thất bại",
     className: "bg-red-50 text-red-700",
-  },
-  REFUNDED: {
-    label: "Đã hoàn tiền",
-    className: "bg-blue-50 text-blue-700",
   },
   EXPIRED: {
     label: "Hết hạn",
@@ -557,18 +549,6 @@ export function BookingDetailScreen({
               <AlertDescription>
                 FieldMate chưa nhận được kết quả cuối cùng. Vui
                 lòng tải lại trang sau ít phút.
-              </AlertDescription>
-            </Alert>
-          )}
-
-        {paymentReturn &&
-          !checkingReturnedPayment &&
-          returnedPaymentStatus === "REFUNDED" && (
-            <Alert className="mb-6 border-blue-200 bg-blue-50 text-blue-800">
-              <CircleAlert />
-              <AlertTitle>Giao dịch đã được hoàn tiền</AlertTitle>
-              <AlertDescription>
-                Khoản thanh toán này đã được hoàn lại.
               </AlertDescription>
             </Alert>
           )}

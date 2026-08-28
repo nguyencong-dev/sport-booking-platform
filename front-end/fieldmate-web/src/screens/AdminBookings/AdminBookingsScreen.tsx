@@ -34,7 +34,6 @@ const statusConfig: Record<
 > = {
   PENDING: { label: "Chờ thanh toán", tone: "amber" },
   CONFIRMED: { label: "Đã xác nhận", tone: "blue" },
-  CANCELLED: { label: "Đã hủy", tone: "red" },
   COMPLETED: { label: "Hoàn thành", tone: "green" },
   EXPIRED: { label: "Hết hạn", tone: "slate" },
 };

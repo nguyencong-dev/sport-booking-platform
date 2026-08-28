@@ -9,7 +9,6 @@ export type PaymentStatus =
   | "PENDING"
   | "PAID"
   | "FAILED"
-  | "REFUNDED"
   | "EXPIRED";
 
 export type PaymentRequest = {

@@ -34,7 +34,6 @@ const statusConfig: Record<
   PENDING: { label: "Đang chờ", tone: "amber" },
   PAID: { label: "Đã thanh toán", tone: "green" },
   FAILED: { label: "Thất bại", tone: "red" },
-  REFUNDED: { label: "Đã hoàn tiền", tone: "slate" },
   EXPIRED: { label: "Hết hạn", tone: "slate" },
 };
 

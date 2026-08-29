@@ -15,5 +15,4 @@ public interface BookingService {
     BookingResponse getBookingById(Long id);
     Page<BookingResponse> getBookingsByVenueId(Long venueId, LocalDate date, BookingStatus status, Long bookingId, int page);
     BookingResponse completeBooking(Long id);
-    Page<BookingResponse> getAllBookings(String search, BookingStatus status, int page);
 }

@@ -47,14 +47,14 @@ public class ApiPaymentController {
         return new ResponseEntity<>(this.paymentService.receiveRemainingCashPayment(id), HttpStatus.CREATED);
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER')")
     @GetMapping("/secure/bookings/{id}/payments")
     public ResponseEntity<List<PaymentResponse>> getPaymentsByBookingId(@PathVariable Long id) {
 
         return new ResponseEntity<>(this.paymentService.getPaymentsByBookingId(id), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER')")
     @GetMapping("/secure/payments/{id}")
     public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Long id) {
 

@@ -33,7 +33,6 @@ import com.nguyencong.fieldmate.entity.enums.PaymentMethod;
 import com.nguyencong.fieldmate.entity.enums.PaymentProvider;
 import com.nguyencong.fieldmate.entity.enums.PaymentStatus;
 import com.nguyencong.fieldmate.entity.enums.PaymentType;
-import com.nguyencong.fieldmate.entity.enums.Role;
 import com.nguyencong.fieldmate.exception.BadRequestException;
 import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
 import com.nguyencong.fieldmate.exception.ResourceNotFoundException;
@@ -283,13 +282,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
-
         boolean isCustomer = booking.getCustomer().getId().equals(currentUser.getId());
 
         boolean isCourtOwner = booking.getCourt().getVenue().getOwner().getId().equals(currentUser.getId());
 
-        if (!isAdmin && !isCustomer && !isCourtOwner) {
+        if (!isCustomer && !isCourtOwner) {
             throw new AccessDeniedException("Bạn không có quyền xem giao dịch của booking này");
         }
 
@@ -308,13 +305,11 @@ public class PaymentServiceImpl implements PaymentService {
 
         Booking booking = payment.getBooking();
 
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
-
         boolean isCustomer = booking.getCustomer().getId().equals(currentUser.getId());
 
         boolean isCourtOwner = booking.getCourt().getVenue().getOwner().getId().equals(currentUser.getId());
 
-        if (!isAdmin && !isCustomer && !isCourtOwner) {
+        if (!isCustomer && !isCourtOwner) {
             throw new AccessDeniedException("Bạn không có quyền xem giao dịch này");
         }
 

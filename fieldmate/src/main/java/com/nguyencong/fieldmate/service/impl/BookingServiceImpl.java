@@ -27,7 +27,6 @@ import com.nguyencong.fieldmate.entity.Venue;
 import com.nguyencong.fieldmate.entity.enums.BookingStatus;
 import com.nguyencong.fieldmate.entity.enums.CourtStatus;
 import com.nguyencong.fieldmate.entity.enums.PaymentStatus;
-import com.nguyencong.fieldmate.entity.enums.Role;
 import com.nguyencong.fieldmate.entity.enums.StatusVenue;
 import com.nguyencong.fieldmate.exception.BadRequestException;
 import com.nguyencong.fieldmate.exception.BusinessRuleViolationException;
@@ -152,13 +151,11 @@ public class BookingServiceImpl implements BookingService {
 
         User currentUser = currentUserProvider.getCurrentUser();
 
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
-
         boolean isCustomer = booking.getCustomer().getId().equals(currentUser.getId());
 
         boolean isCourtOwner = booking.getCourt().getVenue().getOwner().getId().equals(currentUser.getId());
 
-        if (!isAdmin && !isCustomer && !isCourtOwner) {
+        if (!isCustomer && !isCourtOwner) {
             throw new AccessDeniedException("Không có quyền xem lịch đặt sân này");
         }
 
@@ -231,15 +228,5 @@ public class BookingServiceImpl implements BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         return BookingMapper.toResponse(savedBooking);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BookingResponse> getAllBookings(String search, BookingStatus status, int page) {
-        Pageable pageable = PaginationUtils.createPageable(page);
-        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
-        Specification<Booking> specification = BookingSpecification.byAdminFilters(normalizedSearch, status);
-
-        return bookingRepository.findAll(specification, pageable).map(BookingMapper::toResponse);
     }
 }

@@ -47,7 +47,7 @@ public class ApiBookingController {
         return new ResponseEntity<>(this.bookingService.getCurrentCustomerBookings(), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'COURT_OWNER')")
     @GetMapping("/secure/bookings/{id}")
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable Long id) {
 
@@ -69,13 +69,5 @@ public class ApiBookingController {
     public ResponseEntity<BookingResponse> completeBooking(@PathVariable Long id) {
 
         return new ResponseEntity<>(this.bookingService.completeBooking(id), HttpStatus.OK);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/secure/bookings")
-    public ResponseEntity<Page<BookingResponse>> getAllBookings(@RequestParam(required = false) String search,
-            @RequestParam(required = false) BookingStatus status, @RequestParam(defaultValue = "0") int page) {
-
-        return new ResponseEntity<>(this.bookingService.getAllBookings(search, status, page), HttpStatus.OK);
     }
 }

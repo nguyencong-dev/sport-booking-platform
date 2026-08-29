@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BrainCircuit,
   Building2,
-  CalendarDays,
   ChevronRight,
   CreditCard,
   Image,
@@ -59,11 +58,6 @@ const adminNavigation = [
     icon: Trophy,
   },
   {
-    label: "Lịch đặt sân",
-    href: "/admin/bookings",
-    icon: CalendarDays,
-  },
-  {
     label: "Tài khoản thanh toán",
     href: "/admin/payment-accounts",
     icon: CreditCard,
@@ -83,13 +77,6 @@ const adminNavigation = [
 function isActiveRoute(pathname: string, href: string) {
   if (href === "/admin") {
     return pathname === href;
-  }
-
-  if (
-    href === "/admin/bookings" &&
-    pathname.startsWith("/admin/payments/")
-  ) {
-    return true;
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);

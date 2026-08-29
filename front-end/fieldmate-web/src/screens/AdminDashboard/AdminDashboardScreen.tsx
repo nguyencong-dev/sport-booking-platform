@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   Building2,
-  CalendarDays,
   CreditCard,
   Image,
   Trophy,
@@ -28,12 +27,6 @@ const modules = [
     description: "Quản lý danh mục môn thể thao.",
     href: "/admin/sport-types",
     icon: Trophy,
-  },
-  {
-    title: "Lịch đặt sân",
-    description: "Theo dõi toàn bộ booking trên hệ thống.",
-    href: "/admin/bookings",
-    icon: CalendarDays,
   },
   {
     title: "Tài khoản thanh toán",

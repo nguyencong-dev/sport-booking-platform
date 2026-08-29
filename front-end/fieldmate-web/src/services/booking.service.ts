@@ -16,12 +16,6 @@ type GetVenueBookingsParams = {
   bookingId?: number;
 };
 
-type GetAdminBookingsParams = {
-  search?: string;
-  status?: BookingStatus;
-  page?: number;
-};
-
 export const bookingService = {
   async create(request: BookingRequest): Promise<BookingResponse> {
     const response = await fieldmateClient.post<BookingResponse>(
@@ -70,22 +64,6 @@ export const bookingService = {
     const response = await fieldmateClient.patch<BookingResponse>(
       fieldmateEndpoints.completeBooking(bookingId),
     );
-
-    return response.data;
-  },
-
-  async getAll(
-    params: GetAdminBookingsParams = {},
-  ): Promise<PageResponse<BookingResponse>> {
-    const response = await fieldmateClient.get<
-      PageResponse<BookingResponse>
-    >(fieldmateEndpoints.secureBookings, {
-      params: {
-        search: params.search?.trim() || undefined,
-        status: params.status,
-        page: params.page ?? 0,
-      },
-    });
 
     return response.data;
   },

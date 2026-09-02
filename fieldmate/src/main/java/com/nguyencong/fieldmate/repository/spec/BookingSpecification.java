@@ -9,7 +9,6 @@ import org.springframework.data.jpa.domain.Specification;
 import com.nguyencong.fieldmate.entity.Booking;
 import com.nguyencong.fieldmate.entity.enums.BookingStatus;
 
-import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
 
 public final class BookingSpecification {
@@ -34,6 +33,27 @@ public final class BookingSpecification {
 
             if (bookingId != null) {
                 predicates.add(cb.equal(root.get("id"), bookingId));
+            }
+
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    public static Specification<Booking> byStatisticsFilters(Long ownerId, LocalDate from, LocalDate to, Long venueId, Long courtId) {
+
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(cb.equal(root.get("court").get("venue").get("owner").get("id"), ownerId));
+            predicates.add(root.get("status").in(BookingStatus.CONFIRMED, BookingStatus.COMPLETED));
+            predicates.add(cb.between(root.get("bookingDate"), from, to));
+
+            if (venueId != null) {
+                predicates.add(cb.equal(root.get("court").get("venue").get("id"), venueId));
+            }
+
+            if (courtId != null) {
+                predicates.add(cb.equal(root.get("court").get("id"), courtId));
             }
 
             return cb.and(predicates.toArray(Predicate[]::new));

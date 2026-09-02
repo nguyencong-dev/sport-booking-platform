@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,7 +15,7 @@ import org.springframework.data.repository.query.Param;
 import com.nguyencong.fieldmate.entity.Payment;
 import com.nguyencong.fieldmate.entity.enums.PaymentStatus;
 
-public interface PaymentRepository extends JpaRepository<Payment, Long> {
+public interface PaymentRepository extends JpaRepository<Payment, Long>, JpaSpecificationExecutor<Payment> {
 
   boolean existsByBookingIdAndStatus(Long bookingId, PaymentStatus status);
 
@@ -41,6 +43,14 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
   Optional<Payment> findByTransactionCode(String transactionCode);
 
   boolean existsByBookingIdAndStatusAndCreatedAtAfter(Long bookingId, PaymentStatus status, LocalDateTime cutoff);
+
+  @Override
+  @EntityGraph(attributePaths = {
+      "booking",
+      "booking.court",
+      "booking.court.venue"
+  })
+  List<Payment> findAll(Specification<Payment> specification);
 
   @Modifying(clearAutomatically = true, flushAutomatically = true)
   @Query("""

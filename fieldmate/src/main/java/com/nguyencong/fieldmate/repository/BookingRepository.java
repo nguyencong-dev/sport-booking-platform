@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -94,6 +95,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
                         "payments"
         })
         List<Booking> findAllByOrderByCreatedAtDesc();
+
+        @Override
+        @EntityGraph(attributePaths = {
+                        "court",
+                        "court.venue"
+        })
+        List<Booking> findAll(Specification<Booking> specification);
 
         @Modifying(clearAutomatically = true, flushAutomatically = true)
         @Query("""

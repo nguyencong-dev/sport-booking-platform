@@ -6,8 +6,11 @@ import type { CourtRankingMetric, CourtRankingResponse } from "@/types/owner-sta
 
 function formatValue(value: number, metric: CourtRankingMetric) {
   if (metric === "REVENUE") return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(value);
-  if (metric === "BOOKED_HOURS") return `${value.toLocaleString("vi-VN")} giờ`;
-  return `${value.toLocaleString("vi-VN")} lượt`;
+  return `${value.toLocaleString("vi-VN")} giờ`;
+}
+
+function getMetricLabel(metric: CourtRankingMetric) {
+  return metric === "REVENUE" ? "Doanh thu" : "Số giờ được đặt";
 }
 
 export function CourtRankingChart({ data, metric }: { data: CourtRankingResponse[]; metric: CourtRankingMetric }) {
@@ -22,7 +25,7 @@ export function CourtRankingChart({ data, metric }: { data: CourtRankingResponse
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
           <XAxis type="number" hide />
           <YAxis type="category" dataKey="displayName" width={220} tick={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} axisLine={false} tickLine={false} />
-          <Tooltip formatter={(value) => [formatValue(Number(value), metric), "Giá trị"]} labelFormatter={(label) => String(label)} contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0" }} />
+          <Tooltip formatter={(value) => [formatValue(Number(value), metric), getMetricLabel(metric)]} labelFormatter={(label) => String(label)} contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0" }} />
           <Bar dataKey="value" fill="#ff174f" radius={[0, 6, 6, 0]} maxBarSize={32} />
         </BarChart>
       </ResponsiveContainer>

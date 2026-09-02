@@ -20,7 +20,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nguyencong.fieldmate.dto.response.BookingStatisticsResponse;
 import com.nguyencong.fieldmate.dto.response.CourtRankingResponse;
 import com.nguyencong.fieldmate.dto.response.PeakHourStatisticsResponse;
 import com.nguyencong.fieldmate.dto.response.RevenueStatisticsResponse;
@@ -64,25 +63,6 @@ public class OwnerStatisticsServiceImpl implements OwnerStatisticsService {
 
         return revenueByPeriod.entrySet().stream()
                 .map(entry -> RevenueStatisticsResponse.builder().periodStart(entry.getKey()).revenue(entry.getValue()).build())
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<BookingStatisticsResponse> getBookingStatistics(LocalDate from, LocalDate to, String granularity, Long venueId, Long courtId) {
-
-        validateDateRange(from, to);
-
-        User currentOwner = currentUserProvider.getCurrentUser();
-        String normalizedGranularity = normalizeGranularity(granularity);
-        Specification<Booking> specification = BookingSpecification.byStatisticsFilters(currentOwner.getId(), from, to, venueId, courtId);
-        List<Booking> bookings = bookingRepository.findAll(specification);
-
-        Map<LocalDate, Long> bookingsByPeriod = bookings.stream()
-                .collect(Collectors.groupingBy(booking -> getPeriodStart(booking.getBookingDate(), normalizedGranularity), TreeMap::new, Collectors.counting()));
-
-        return bookingsByPeriod.entrySet().stream()
-                .map(entry -> BookingStatisticsResponse.builder().periodStart(entry.getKey()).bookingCount(entry.getValue()).build())
                 .toList();
     }
 
@@ -144,13 +124,7 @@ public class OwnerStatisticsServiceImpl implements OwnerStatisticsService {
         }
 
         Specification<Booking> specification = BookingSpecification.byStatisticsFilters(currentOwner.getId(), from, to, venueId, null);
-        List<Booking> bookings = bookingRepository.findAll(specification);
-
-        if (normalizedMetric.equals("BOOKING_COUNT")) {
-            return getCourtBookingRanking(bookings, limit);
-        }
-
-        return getCourtBookedHoursRanking(bookings, limit);
+        return getCourtBookedHoursRanking(bookingRepository.findAll(specification), limit);
     }
 
     private List<CourtRankingResponse> getCourtRevenueRanking(List<Payment> payments, Integer limit) {
@@ -164,21 +138,6 @@ public class OwnerStatisticsServiceImpl implements OwnerStatisticsService {
                 .map(entry -> {
                     Court court = courts.get(entry.getKey());
                     return CourtRankingResponse.builder().courtId(court.getId()).courtName(court.getName()).venueName(court.getVenue().getName()).value(entry.getValue()).build();
-                })
-                .toList();
-    }
-
-    private List<CourtRankingResponse> getCourtBookingRanking(List<Booking> bookings, Integer limit) {
-
-        Map<Long, Court> courts = bookings.stream().map(Booking::getCourt).collect(Collectors.toMap(Court::getId, court -> court, (first, second) -> first));
-        Map<Long, Long> bookingsByCourt = bookings.stream().collect(Collectors.groupingBy(booking -> booking.getCourt().getId(), Collectors.counting()));
-
-        return bookingsByCourt.entrySet().stream()
-                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
-                .limit(limit)
-                .map(entry -> {
-                    Court court = courts.get(entry.getKey());
-                    return CourtRankingResponse.builder().courtId(court.getId()).courtName(court.getName()).venueName(court.getVenue().getName()).value(BigDecimal.valueOf(entry.getValue())).build();
                 })
                 .toList();
     }
@@ -228,8 +187,8 @@ public class OwnerStatisticsServiceImpl implements OwnerStatisticsService {
         String value = metric == null ? "REVENUE" : metric.trim().toUpperCase(Locale.ROOT);
 
         return switch (value) {
-            case "REVENUE", "BOOKING_COUNT", "BOOKED_HOURS" -> value;
-            default -> throw new BadRequestException("Chỉ hỗ trợ REVENUE, BOOKING_COUNT hoặc BOOKED_HOURS");
+            case "REVENUE", "BOOKED_HOURS" -> value;
+            default -> throw new BadRequestException("Chỉ hỗ trợ REVENUE hoặc BOOKED_HOURS");
         };
     }
 
@@ -246,4 +205,5 @@ public class OwnerStatisticsServiceImpl implements OwnerStatisticsService {
             throw new BadRequestException("Limit phải nằm trong khoảng từ 1 đến 20");
         }
     }
+
 }

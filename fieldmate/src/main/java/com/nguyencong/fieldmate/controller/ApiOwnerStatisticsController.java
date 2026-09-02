@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nguyencong.fieldmate.dto.response.BookingStatisticsResponse;
 import com.nguyencong.fieldmate.dto.response.CourtRankingResponse;
 import com.nguyencong.fieldmate.dto.response.PeakHourStatisticsResponse;
 import com.nguyencong.fieldmate.dto.response.RevenueStatisticsResponse;
@@ -34,13 +33,6 @@ public class ApiOwnerStatisticsController {
     public ResponseEntity<List<RevenueStatisticsResponse>> getRevenueStatistics(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to, @RequestParam(defaultValue = "DAY") String granularity, @RequestParam(required = false) Long venueId, @RequestParam(required = false) Long courtId) {
 
         return new ResponseEntity<>(this.ownerStatisticsService.getRevenueStatistics(from, to, granularity, venueId, courtId), HttpStatus.OK);
-    }
-
-    @PreAuthorize("hasRole('COURT_OWNER')")
-    @GetMapping("/secure/owner/statistics/bookings")
-    public ResponseEntity<List<BookingStatisticsResponse>> getBookingStatistics(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to, @RequestParam(defaultValue = "DAY") String granularity, @RequestParam(required = false) Long venueId, @RequestParam(required = false) Long courtId) {
-
-        return new ResponseEntity<>(this.ownerStatisticsService.getBookingStatistics(from, to, granularity, venueId, courtId), HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('COURT_OWNER')")

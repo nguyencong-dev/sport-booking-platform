@@ -1,6 +1,6 @@
 export type StatisticsGranularity = "DAY" | "WEEK" | "MONTH";
 
-export type CourtRankingMetric = "REVENUE" | "BOOKING_COUNT" | "BOOKED_HOURS";
+export type CourtRankingMetric = "REVENUE" | "BOOKED_HOURS";
 
 export type StatisticsFilterParams = {
   from: string;
@@ -21,11 +21,6 @@ export type CourtRankingParams = Omit<StatisticsFilterParams, "courtId"> & {
 export type RevenueStatisticsResponse = {
   periodStart: string;
   revenue: number;
-};
-
-export type BookingStatisticsResponse = {
-  periodStart: string;
-  bookingCount: number;
 };
 
 export type PeakHourStatisticsResponse = {

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChartNoAxesCombined, CircleAlert, LoaderCircle, RefreshCcw } from "lucide-react";
 
-import { BookingChart } from "@/components/OwnerStatistics/BookingChart";
 import { CourtRankingChart } from "@/components/OwnerStatistics/CourtRankingChart";
 import { PeakHourChart } from "@/components/OwnerStatistics/PeakHourChart";
 import { RevenueChart } from "@/components/OwnerStatistics/RevenueChart";
@@ -18,7 +17,7 @@ import { courtService } from "@/services/court.service";
 import { ownerStatisticsService } from "@/services/owner-statistics.service";
 import { venueService } from "@/services/venue.service";
 import type { CourtResponse } from "@/types/court";
-import type { BookingStatisticsResponse, CourtRankingMetric, CourtRankingResponse, PeakHourStatisticsResponse, RevenueStatisticsResponse, StatisticsGranularity } from "@/types/owner-statistics";
+import type { CourtRankingMetric, CourtRankingResponse, PeakHourStatisticsResponse, RevenueStatisticsResponse, StatisticsGranularity } from "@/types/owner-statistics";
 import type { VenueSummaryResponse } from "@/types/venue";
 
 type ApiErrorResponse = {
@@ -27,12 +26,11 @@ type ApiErrorResponse = {
 
 type StatisticsData = {
   revenue: RevenueStatisticsResponse[];
-  bookings: BookingStatisticsResponse[];
   peakHours: PeakHourStatisticsResponse[];
   courtRanking: CourtRankingResponse[];
 };
 
-const emptyStatistics: StatisticsData = { revenue: [], bookings: [], peakHours: [], courtRanking: [] };
+const emptyStatistics: StatisticsData = { revenue: [], peakHours: [], courtRanking: [] };
 
 function toDateInput(date: Date) {
   const year = date.getFullYear();
@@ -49,7 +47,7 @@ const initialFromDate = (() => {
 })();
 
 const granularityLabels: Record<StatisticsGranularity, string> = { DAY: "Ngày", WEEK: "Tuần", MONTH: "Tháng" };
-const metricLabels: Record<CourtRankingMetric, string> = { REVENUE: "Doanh thu", BOOKING_COUNT: "Lượt đặt", BOOKED_HOURS: "Số giờ được đặt" };
+const metricLabels: Record<CourtRankingMetric, string> = { REVENUE: "Doanh thu", BOOKED_HOURS: "Số giờ được đặt" };
 
 function getErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError<ApiErrorResponse>(error)) return error.response?.data?.message ?? fallback;
@@ -64,13 +62,12 @@ async function getAllOwnerVenues() {
 
 async function getStatistics(from: string, to: string, granularity: StatisticsGranularity, metric: CourtRankingMetric, venueId: number | null, courtId: number | null): Promise<StatisticsData> {
   const commonParams = { from, to, venueId: venueId ?? undefined, courtId: courtId ?? undefined };
-  const [revenue, bookings, peakHours, courtRanking] = await Promise.all([
+  const [revenue, peakHours, courtRanking] = await Promise.all([
     ownerStatisticsService.getRevenue({ ...commonParams, granularity }),
-    ownerStatisticsService.getBookings({ ...commonParams, granularity }),
     ownerStatisticsService.getPeakHours(commonParams),
     ownerStatisticsService.getCourtRanking({ from, to, venueId: venueId ?? undefined, metric, limit: 5 }),
   ]);
-  return { revenue, bookings, peakHours, courtRanking };
+  return { revenue, peakHours, courtRanking };
 }
 
 function ChartLoading() {
@@ -82,16 +79,16 @@ export function OwnerStatisticsScreen() {
   const { user, ready, isAuthenticated } = useAuth();
   const [fromDate, setFromDate] = useState(initialFromDate);
   const [toDate, setToDate] = useState(initialToDate);
-  const [granularity, setGranularity] = useState<StatisticsGranularity>("DAY");
   const [appliedGranularity, setAppliedGranularity] = useState<StatisticsGranularity>("DAY");
   const [appliedMetric, setAppliedMetric] = useState<CourtRankingMetric>("REVENUE");
-  const [appliedFilters, setAppliedFilters] = useState<{ from: string; to: string; venueId: number | null }>({ from: initialFromDate, to: initialToDate, venueId: null });
+  const [appliedFilters, setAppliedFilters] = useState<{ from: string; to: string; venueId: number | null; courtId: number | null }>({ from: initialFromDate, to: initialToDate, venueId: null, courtId: null });
   const [venues, setVenues] = useState<VenueSummaryResponse[]>([]);
   const [courts, setCourts] = useState<CourtResponse[]>([]);
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null);
   const [selectedCourtId, setSelectedCourtId] = useState<number | null>(null);
   const [statistics, setStatistics] = useState<StatisticsData>(emptyStatistics);
   const [loading, setLoading] = useState(true);
+  const [loadingRevenue, setLoadingRevenue] = useState(false);
   const [loadingRanking, setLoadingRanking] = useState(false);
   const [loadingCourts, setLoadingCourts] = useState(false);
   const [error, setError] = useState("");
@@ -160,14 +157,29 @@ export function OwnerStatisticsScreen() {
     try {
       setLoading(true);
       setError("");
-      const result = await getStatistics(fromDate, toDate, granularity, appliedMetric, selectedVenueId, selectedCourtId);
+      const result = await getStatistics(fromDate, toDate, appliedGranularity, appliedMetric, selectedVenueId, selectedCourtId);
       setStatistics(result);
-      setAppliedGranularity(granularity);
-      setAppliedFilters({ from: fromDate, to: toDate, venueId: selectedVenueId });
+      setAppliedFilters({ from: fromDate, to: toDate, venueId: selectedVenueId, courtId: selectedCourtId });
     } catch (requestError) {
       setError(getErrorMessage(requestError, "Không thể tải dữ liệu thống kê."));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRevenueGranularityChange(nextGranularity: StatisticsGranularity) {
+    if (nextGranularity === appliedGranularity) return;
+
+    try {
+      setLoadingRevenue(true);
+      setError("");
+      const revenue = await ownerStatisticsService.getRevenue({ from: appliedFilters.from, to: appliedFilters.to, granularity: nextGranularity, venueId: appliedFilters.venueId ?? undefined, courtId: appliedFilters.courtId ?? undefined });
+      setStatistics((currentStatistics) => ({ ...currentStatistics, revenue }));
+      setAppliedGranularity(nextGranularity);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, "Không thể tải thống kê doanh thu."));
+    } finally {
+      setLoadingRevenue(false);
     }
   }
 
@@ -208,28 +220,22 @@ export function OwnerStatisticsScreen() {
         )}
 
         <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <FilterField label="Từ ngày">
               <input type="date" value={fromDate} max={toDate} onChange={(event) => setFromDate(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77]" />
             </FilterField>
             <FilterField label="Đến ngày">
               <input type="date" value={toDate} min={fromDate} onChange={(event) => setToDate(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#073b77]" />
             </FilterField>
-            <FilterField label="Hiển thị theo">
-              <Select value={granularity} onValueChange={(value) => value && setGranularity(value as StatisticsGranularity)}>
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 px-3"><SelectValue>{(value) => granularityLabels[value as StatisticsGranularity] ?? "Chọn nhóm thời gian"}</SelectValue></SelectTrigger>
-                <SelectContent>{Object.entries(granularityLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
-              </Select>
-            </FilterField>
             <FilterField label="Cụm sân">
               <Select value={selectedVenueId === null ? "ALL" : String(selectedVenueId)} onValueChange={handleVenueChange}>
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 px-3"><SelectValue>{(value) => value === "ALL" ? "Tất cả cụm sân" : venues.find((venue) => String(venue.id) === String(value))?.name ?? "Chọn cụm sân"}</SelectValue></SelectTrigger>
+                <SelectTrigger className="h-11 min-h-11 w-full rounded-xl border-slate-200 px-3"><SelectValue>{(value) => value === "ALL" ? "Tất cả cụm sân" : venues.find((venue) => String(venue.id) === String(value))?.name ?? "Chọn cụm sân"}</SelectValue></SelectTrigger>
                 <SelectContent><SelectItem value="ALL">Tất cả cụm sân</SelectItem>{venues.map((venue) => <SelectItem key={venue.id} value={String(venue.id)}>{venue.name}</SelectItem>)}</SelectContent>
               </Select>
             </FilterField>
             <FilterField label="Sân con">
               <Select value={selectedCourtId === null ? "ALL" : String(selectedCourtId)} onValueChange={(value) => setSelectedCourtId(value && value !== "ALL" ? Number(value) : null)} disabled={selectedVenueId === null || loadingCourts}>
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 px-3"><SelectValue>{(value) => loadingCourts ? "Đang tải..." : value === "ALL" ? "Tất cả sân con" : courts.find((court) => String(court.id) === String(value))?.name ?? "Chọn sân con"}</SelectValue></SelectTrigger>
+                <SelectTrigger className="h-11 min-h-11 w-full rounded-xl border-slate-200 px-3"><SelectValue>{(value) => loadingCourts ? "Đang tải..." : value === "ALL" ? "Tất cả sân con" : courts.find((court) => String(court.id) === String(value))?.name ?? "Chọn sân con"}</SelectValue></SelectTrigger>
                 <SelectContent><SelectItem value="ALL">Tất cả sân con</SelectItem>{courts.map((court) => <SelectItem key={court.id} value={String(court.id)}>{court.name}</SelectItem>)}</SelectContent>
               </Select>
             </FilterField>
@@ -242,25 +248,32 @@ export function OwnerStatisticsScreen() {
         </section>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <StatisticsCard title="Doanh thu theo thời gian">
-            {loading ? <ChartLoading /> : <RevenueChart data={statistics.revenue} granularity={appliedGranularity} />}
-          </StatisticsCard>
-          <StatisticsCard title="Số lượt đặt theo thời gian">
-            {loading ? <ChartLoading /> : <BookingChart data={statistics.bookings} granularity={appliedGranularity} />}
-          </StatisticsCard>
           <div className="xl:col-span-2">
-            <StatisticsCard title="Khung giờ đông khách">
+            <StatisticsCard title="Doanh thu" action={
+              <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+                {Object.entries(granularityLabels).map(([value, label]) => {
+                  const nextGranularity = value as StatisticsGranularity;
+                  return <Button key={value} type="button" variant="ghost" size="sm" disabled={loading || loadingRevenue} onClick={() => handleRevenueGranularityChange(nextGranularity)} className={appliedGranularity === nextGranularity ? "rounded-lg bg-[#073b77] px-4 font-bold text-white hover:bg-[#073b77] hover:text-white" : "rounded-lg px-4 font-bold text-slate-600 hover:bg-white"}>{label}</Button>;
+                })}
+              </div>
+            }>
+              {loading || loadingRevenue ? <ChartLoading /> : <RevenueChart data={statistics.revenue} granularity={appliedGranularity} />}
+            </StatisticsCard>
+          </div>
+          <div className="xl:col-span-2">
+            <StatisticsCard title="Khung giờ">
               {loading ? <ChartLoading /> : <PeakHourChart data={statistics.peakHours} />}
             </StatisticsCard>
           </div>
           <div className="xl:col-span-2">
-            <StatisticsCard title="Top sân con">
-              <div className="mb-5 inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+            <StatisticsCard title="Top sân" action={
+              <div className="inline-flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
                 {Object.entries(metricLabels).map(([value, label]) => {
                   const rankingMetric = value as CourtRankingMetric;
                   return <Button key={value} type="button" variant="ghost" size="sm" disabled={loading || loadingRanking} onClick={() => handleRankingMetricChange(rankingMetric)} className={appliedMetric === rankingMetric ? "rounded-lg bg-[#073b77] px-4 font-bold text-white hover:bg-[#073b77] hover:text-white" : "rounded-lg px-4 font-bold text-slate-600 hover:bg-white"}>{label}</Button>;
                 })}
               </div>
+            }>
               {loading || loadingRanking ? <ChartLoading /> : <CourtRankingChart data={statistics.courtRanking} metric={appliedMetric} />}
             </StatisticsCard>
           </div>
@@ -271,14 +284,15 @@ export function OwnerStatisticsScreen() {
 }
 
 function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label><span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-500">{label}</span>{children}</label>;
+  return <label className="min-w-0"><span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-500">{label}</span>{children}</label>;
 }
 
-function StatisticsCard({ title, children }: { title: string; children: React.ReactNode }) {
+function StatisticsCard({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <Card className="gap-0 rounded-2xl border-0 bg-white py-0 shadow-sm ring-1 ring-slate-200">
-      <CardHeader className="border-b border-slate-100 px-5 py-4 sm:px-6">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
         <CardTitle className="font-extrabold text-[#073b77]">{title}</CardTitle>
+        {action}
       </CardHeader>
       <CardContent className="p-5 sm:p-6">{children}</CardContent>
     </Card>

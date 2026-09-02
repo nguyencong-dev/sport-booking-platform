@@ -59,4 +59,5 @@ public final class BookingSpecification {
             return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
+
 }

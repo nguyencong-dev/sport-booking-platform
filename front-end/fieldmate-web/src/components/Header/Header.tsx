@@ -7,6 +7,7 @@ import {
   Building2,
   Bot,
   CalendarDays,
+  ChartNoAxesCombined,
   ChevronDown,
   CreditCard,
   House,
@@ -65,6 +66,11 @@ const courtOwnerNavigation = [
     label: "Quản lý lịch đặt",
     href: "/owner-bookings",
     icon: CalendarDays,
+  },
+  {
+    label: "Thống kê",
+    href: "/owner-statistics",
+    icon: ChartNoAxesCombined,
   },
   {
     label: "Tài khoản nhận tiền",

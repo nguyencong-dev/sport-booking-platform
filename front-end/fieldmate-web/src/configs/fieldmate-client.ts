@@ -21,6 +21,10 @@ export const fieldmateEndpoints = {
     `/secure/venues/${venueId}/bookings`,
   completeBooking: (bookingId: number) =>
     `/secure/bookings/${bookingId}/complete`,
+  ownerRevenueStatistics: "/secure/owner/statistics/revenue",
+  ownerBookingStatistics: "/secure/owner/statistics/bookings",
+  ownerPeakHourStatistics: "/secure/owner/statistics/peak-hours",
+  ownerCourtRanking: "/secure/owner/statistics/courts/ranking",
   venueCourts: (venueId: number) => `/venues/${venueId}/courts`,
   court: (courtId: number) => `/courts/${courtId}`,
   secureVenueCourts: (venueId: number) =>

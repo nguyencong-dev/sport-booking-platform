@@ -4,7 +4,6 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Banknote,
   CalendarCheck2,
   CheckCircle2,
   CircleAlert,
@@ -186,17 +185,6 @@ export function OwnerBookingsScreen() {
       ? Number(normalizedValue)
       : undefined;
   }, [searchValue]);
-
-  const statistics = useMemo(
-    () => ({
-      total: totalBookings,
-      paid: bookings.reduce(
-        (total, booking) => total + booking.paidAmount,
-        0,
-      ),
-    }),
-    [bookings, totalBookings],
-  );
 
   useEffect(() => {
     if (!ready) {
@@ -507,21 +495,6 @@ export function OwnerBookingsScreen() {
           </div>
         ) : (
           <>
-            <div className="mb-6 grid gap-4 sm:grid-cols-2">
-              <StatisticCard
-                icon={CalendarCheck2}
-                label="Tổng lịch đặt"
-                value={String(statistics.total)}
-                iconClassName="bg-blue-100 text-blue-600"
-              />
-              <StatisticCard
-                icon={Banknote}
-                label="Đã thanh toán trên trang"
-                value={formatCurrency(statistics.paid)}
-                iconClassName="bg-emerald-100 text-emerald-600"
-              />
-            </div>
-
             <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <label className="grid min-w-0 gap-2">
@@ -863,36 +836,6 @@ export function OwnerBookingsScreen() {
         }}
       />
     </main>
-  );
-}
-
-type StatisticCardProps = {
-  icon: typeof CalendarCheck2;
-  label: string;
-  value: string;
-  iconClassName: string;
-};
-
-function StatisticCard({
-  icon: Icon,
-  label,
-  value,
-  iconClassName,
-}: StatisticCardProps) {
-  return (
-    <article className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <span
-        className={`grid size-12 shrink-0 place-items-center rounded-xl ${iconClassName}`}
-      >
-        <Icon className="size-5" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-500">{label}</p>
-        <p className="mt-1 truncate text-xl font-black text-[#073b77]">
-          {value}
-        </p>
-      </div>
-    </article>
   );
 }
 

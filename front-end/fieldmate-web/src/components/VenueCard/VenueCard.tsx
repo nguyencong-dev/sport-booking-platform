@@ -114,7 +114,7 @@ export function VenueCard({ venue }: VenueCardProps) {
             {venue.distanceKm !== null && (
               <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-[#073b77]">
                 <Navigation className="size-3.5 text-[#ff174f]" />
-                Cách bạn {venue.distanceKm.toFixed(1)} km
+                Cách bạn khoảng {venue.distanceKm.toFixed(1)} km
               </div>
             )}
           </div>

@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer/Footer";
 const compactRoutePrefixes = [
   "/my-venues",
   "/owner-bookings",
+  "/owner-statistics",
   "/payment-accounts",
 ];
 

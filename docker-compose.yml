@@ -65,6 +65,19 @@ services:
       postgres:
         condition: service_healthy
 
+  frontend:
+      build:
+        context: ./front-end/fieldmate-web
+        args:
+          NEXT_PUBLIC_FIELDMATE_API_URL: http://localhost:8080/api
+          NEXT_PUBLIC_AI_API_URL: http://localhost:8000/api
+          NEXT_PUBLIC_PROVINCE_API_URL: https://provinces.open-api.vn/api/v2
+      ports:
+        - "3000:3000"
+      depends_on:
+        - backend
+        - ai-service
+
 volumes:
   postgres_data:
   ai_documents:

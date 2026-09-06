@@ -29,6 +29,8 @@ export const fieldmateEndpoints = {
   secureVenueCourts: (venueId: number) =>
     `/secure/venues/${venueId}/courts`,
   secureCourt: (courtId: number) => `/secure/courts/${courtId}`,
+  courtStatus: (courtId: number) =>
+    `/secure/courts/${courtId}/status`,
   paymentAccounts: "/secure/payment-accounts",
   myPaymentAccounts: "/secure/payment-accounts/me",
   paymentAccount: (accountId: number) =>

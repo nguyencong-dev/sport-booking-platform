@@ -42,6 +42,7 @@ import { sportTypeService } from "@/services/sport-type.service";
 import { venueImageService } from "@/services/venue-image.service";
 import { venueService } from "@/services/venue.service";
 import type { BenefitResponse } from "@/types/benefit";
+import type { CourtStatus } from "@/types/court";
 import type { ProvinceResponse } from "@/types/province";
 import type { RuleResponse } from "@/types/rule";
 import type { SportTypeResponse } from "@/types/sport-type";
@@ -64,6 +65,7 @@ type CourtFormItem = {
   name: string;
   pricePerHour: string;
   sportTypeId: string;
+  status: CourtStatus;
 };
 
 type RuleFormItem = {
@@ -310,6 +312,7 @@ export function VenueFormScreen({
             name: court.name,
             pricePerHour: String(court.pricePerHour),
             sportTypeId: court.sportTypeName,
+            status: court.status,
           })),
         );
       } catch (requestError) {
@@ -371,6 +374,7 @@ export function VenueFormScreen({
         name: "",
         pricePerHour: "",
         sportTypeId: "",
+        status: "ACTIVE",
       },
     ]);
   }
@@ -385,6 +389,14 @@ export function VenueFormScreen({
         court.clientId === clientId
           ? { ...court, [field]: value }
           : court,
+      ),
+    );
+  }
+
+  function updateCourtStatus(clientId: string, status: CourtStatus) {
+    setCourts((current) =>
+      current.map((court) =>
+        court.clientId === clientId ? { ...court, status } : court,
       ),
     );
   }
@@ -729,16 +741,22 @@ export function VenueFormScreen({
       const savedVenueId = savedVenue.id;
 
       await Promise.all(
-        normalizedCourts.map((court) => {
+        normalizedCourts.map(async (court) => {
           const courtPayload = {
             name: court.name,
             pricePerHour: court.parsedPrice,
             sportTypeId: court.parsedSportTypeId,
           };
 
-          return court.id
+          const savedCourt = court.id
             ? courtService.update(court.id, courtPayload)
             : courtService.create(savedVenueId, courtPayload);
+
+          const updatedCourt = await savedCourt;
+
+          return updatedCourt.status === court.status
+            ? updatedCourt
+            : courtService.updateStatus(updatedCourt.id, court.status);
         }),
       );
 
@@ -1048,7 +1066,7 @@ export function VenueFormScreen({
                 {courts.map((court, index) => (
                   <div
                     key={court.clientId}
-                    className="grid gap-4 rounded-2xl border border-slate-200 p-4 lg:grid-cols-[1fr_1fr_1fr_auto]"
+                    className="grid gap-4 rounded-2xl border border-slate-200 p-4 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]"
                   >
                     <div>
                       <label
@@ -1137,6 +1155,31 @@ export function VenueFormScreen({
                             {sportType.name}
                           </option>
                         ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`court-status-${court.clientId}`}
+                        className="mb-2 block text-sm font-bold text-slate-700"
+                      >
+                        Trạng thái
+                      </label>
+                      <select
+                        id={`court-status-${court.clientId}`}
+                        value={court.status}
+                        disabled={submitting}
+                        onChange={(event) =>
+                          updateCourtStatus(
+                            court.clientId,
+                            event.target.value as CourtStatus,
+                          )
+                        }
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-[#073b77]"
+                      >
+                        <option value="ACTIVE">Đang hoạt động</option>
+                        <option value="INACTIVE">Tạm ngưng</option>
+                        <option value="MAINTENANCE">Bảo trì</option>
                       </select>
                     </div>
 

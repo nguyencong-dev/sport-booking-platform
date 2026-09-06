@@ -2,7 +2,11 @@ import {
   fieldmateClient,
   fieldmateEndpoints,
 } from "@/configs/fieldmate-client";
-import type { CourtRequest, CourtResponse } from "@/types/court";
+import type {
+  CourtRequest,
+  CourtResponse,
+  CourtStatus,
+} from "@/types/court";
 
 export const courtService = {
   async getByVenueId(venueId: number) {
@@ -34,6 +38,18 @@ export const courtService = {
     const response = await fieldmateClient.put<CourtResponse>(
       fieldmateEndpoints.secureCourt(courtId),
       data,
+    );
+
+    return response.data;
+  },
+
+  async updateStatus(courtId: number, status: CourtStatus) {
+    const response = await fieldmateClient.patch<CourtResponse>(
+      fieldmateEndpoints.courtStatus(courtId),
+      undefined,
+      {
+        params: { status },
+      },
     );
 
     return response.data;
